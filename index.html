@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HR Management System — Dashboard</title>
+  <meta name="description" content="Sistem manajemen SDM terpadu dengan absensi berbasis GPS dan kamera, manajemen karyawan, laporan, dan cuti." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            dark: {
+              900: '#0a0a0f',
+              800: '#0f0f17',
+              700: '#141420',
+              600: '#1a1a2e',
+              500: '#22223a',
+              400: '#2d2d4a',
+              300: '#3d3d5c',
+            },
+            primary: {
+              50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa',
+              300: '#fdba74', 400: '#fb923c', 500: '#f97316',
+              600: '#ea6c0a', 700: '#c2570a', 800: '#9a4208', 900: '#7c2d12',
+            },
+            teal: {
+              400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #0a0a0f; color: #f1f5f9; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #0f0f17; }
+    ::-webkit-scrollbar-thumb { background: #2d2d4a; border-radius: 2px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .sidebar-link { transition: all .2s; }
+    .sidebar-link:hover { background: rgba(249,115,22,0.1); color: #f97316; }
+    .sidebar-link.active { background: rgba(249,115,22,0.15); color: #f97316; border-right: 2px solid #f97316; }
+    .sidebar-link.active i { color: #f97316; }
+    .glass-card { background: rgba(26,26,46,0.8); backdrop-filter: blur(12px); border: 1px solid rgba(61,61,92,0.5); }
+    .stat-card { transition: transform .2s, box-shadow .2s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(249,115,22,0.15); }
+    .btn-primary { background: linear-gradient(135deg, #f97316, #ea6c0a); transition: all .2s; }
+    .btn-primary:hover { background: linear-gradient(135deg, #fb923c, #f97316); box-shadow: 0 4px 20px rgba(249,115,22,0.4); transform: translateY(-1px); }
+    .pulse-dot { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.7;transform:scale(1.2)} }
+    .fade-in { animation: fadeIn .4s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .camera-container { position: relative; overflow: hidden; border-radius: 12px; }
+    .stamp-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.9)); padding: 16px; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 1000; display: none; align-items: center; justify-content: center; }
+    .modal-backdrop.show { display: flex; }
+    .sidebar { transition: transform .3s; }
+    .gradient-text { background: linear-gradient(135deg, #f97316, #14b8a6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .table-row:hover td { background: rgba(249,115,22,0.05); }
+    .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .map-placeholder { background: linear-gradient(135deg, #1a1a2e, #22223a); border: 1px solid #2d2d4a; border-radius: 12px; height: 200px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    .map-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(249,115,22,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(249,115,22,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+    .map-pin { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%); }
+    .map-circle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; border: 2px solid rgba(249,115,22,0.4); border-radius: 50%; animation: expand 2s infinite; }
+    @keyframes expand { 0%{width:20px;height:20px;opacity:1} 100%{width:80px;height:80px;opacity:0} }
+    .notification-badge { background: #ef4444; color: white; font-size: 9px; font-weight: 700; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: absolute; top: -4px; right: -4px; }
+    #leaveTable tr:hover td { background: rgba(249,115,22,0.03); }
+    .progress-bar { background: linear-gradient(90deg, #f97316, #14b8a6); height: 6px; border-radius: 3px; transition: width 1s ease; }
+    input[type=text], input[type=email], input[type=date], select, textarea { background: #141420; border: 1px solid #2d2d4a; color: #f1f5f9; border-radius: 8px; padding: 8px 12px; width: 100%; transition: border-color .2s; }
+    input[type=text]:focus, input[type=email]:focus, input[type=date]:focus, select:focus, textarea:focus { outline: none; border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
+    option { background: #141420; }
+    .sidebar-logo-pulse { animation: logoPulse 3s infinite; }
+    @keyframes logoPulse { 0%,100%{box-shadow: 0 0 0 0 rgba(249,115,22,0)} 50%{box-shadow: 0 0 0 8px rgba(249,115,22,0)} }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<!-- ====== SIDEBAR ====== -->
+<aside id="sidebar" class="sidebar w-64 flex-shrink-0 h-full flex flex-col" style="background:#0f0f17; border-right:1px solid #1a1a2e;">
+  <!-- Logo -->
+  <div class="flex items-center gap-3 px-5 py-5 border-b" style="border-color:#1a1a2e;">
+    <div class="sidebar-logo-pulse w-9 h-9 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#f97316,#ea6c0a);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    </div>
+    <div>
+      <div class="font-bold text-sm" style="color:#f1f5f9;">HRManage</div>
+      <div class="text-xs" style="color:#64748b;">DASHBOARD</div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="flex-1 overflow-y-auto py-4 px-3">
+    <div class="text-xs font-semibold px-3 mb-2 uppercase tracking-widest" style="color:#3d3d5c;">Overview</div>
+    <a href="#" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm font-medium" onclick="navigate('dashboard')">
+      <i data-lucide="layout-dashboard" class="w-4 h-4" style="color:#64748b;"></i> Dashboard
+    </a>
+    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm font-medium" style="color:#94a3b8;" onclick="navigate('analytics')">
+      <i data-lucide="bar-chart-3" class="w-4 h-4" style="color:#64748b;"></i> Analytics
+    </a>
+
+    <div class="text-xs font-semibold px-3 mt-5 mb-2 uppercase tracking-widest" style="color:#3d3d5c;">HR Modules</div>
+    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm font-medium" style="color:#94a3b8;" onclick="navigate('absensi')">
+      <i data-lucide="scan-face" class="w-4 h-4" style="color:#64748b;"></i> Absensi
+    </a>
+    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm font-medium" style="color:#94a3b8;" onclick="navigate('karyawan')">
+      <i data-lucide="users" class="w-4 h-4" style="color:#64748b;"></i> Karyawan
+    </a>
+    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm font-medium" style="color:#94a3b8;" onclick="navigate('laporan')">
+      <i data-lucide="file-bar-chart" class="w-4 h-4" style="color:#64748b;"></i> Laporan
+    </a>
+    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm font-medium" style="color:#94a3b8;" onclick="navigate('cuti')">
+      <i data-lucide="calendar-off" class="w-4 h-4" style="color:#64748b;"></i> Cuti & Izin
+    </a>
+
+    <div class="text-xs font-semibold px-3 mt-5 mb-2 uppercase tracking-widest" style="color:#3d3d5c;">Settings</div>
+    <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm font-medium" style="color:#94a3b8;" onclick="navigate('settings')">
+      <i data-lucide="settings" class="w-4 h-4" style="color:#64748b;"></i> Pengaturan
+    </a>
+  </nav>
+
+  <!-- User Profile -->
+  <div class="px-4 py-4 border-t flex items-center gap-3" style="border-color:#1a1a2e;">
+    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style="background:linear-gradient(135deg,#f97316,#14b8a6);color:white;">AD</div>
+    <div class="flex-1 min-w-0">
+      <div class="text-sm font-medium truncate" style="color:#f1f5f9;">Admin HR</div>
+      <div class="text-xs truncate" style="color:#64748b;">admin@company.co.id</div>
+    </div>
+    <button class="flex-shrink-0 p-1 rounded-lg hover:bg-white/5 transition-colors" onclick="navigate('settings')">
+      <i data-lucide="log-out" class="w-4 h-4" style="color:#64748b;"></i>
+    </button>
+  </div>
+</aside>
+
+<!-- ====== MAIN CONTENT ====== -->
+<div class="flex-1 flex flex-col overflow-hidden">
+
+  <!-- TOPBAR -->
+  <header class="flex items-center justify-between px-6 py-4 flex-shrink-0" style="background:#0f0f17; border-bottom:1px solid #1a1a2e;">
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style="color:#64748b;"></i>
+        <input type="text" placeholder="Cari sesuatu..." class="pl-9 pr-4 py-2 text-sm rounded-lg w-64 focus:w-80 transition-all duration-300" style="background:#141420; border:1px solid #2d2d4a; color:#f1f5f9; outline:none;" />
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <button class="relative p-2 rounded-xl hover:bg-white/5 transition-colors">
+        <i data-lucide="moon" class="w-4 h-4" style="color:#94a3b8;"></i>
+      </button>
+      <button class="relative p-2 rounded-xl hover:bg-white/5 transition-colors">
+        <i data-lucide="bell" class="w-4 h-4" style="color:#94a3b8;"></i>
+        <span class="notification-badge">3</span>
+      </button>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background:linear-gradient(135deg,#f97316,#14b8a6);color:white;">AD</div>
+        <span class="text-sm font-medium" style="color:#f1f5f9;">Admin</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- PAGE CONTENT -->
+  <main class="flex-1 overflow-y-auto p-6">
+
+    <!-- ======== DASHBOARD PAGE ======== -->
+    <div id="page-dashboard" class="page active fade-in">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold" style="color:#f1f5f9;">Dashboard</h1>
+        <p class="text-sm mt-1" style="color:#64748b;">Selamat datang kembali, Admin. Berikut ringkasan hari ini.</p>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-4 gap-5 mb-6">
+        <div class="stat-card glass-card rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Total Karyawan</div>
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(249,115,22,0.15);">
+              <i data-lucide="users" class="w-4 h-4" style="color:#f97316;"></i>
+            </div>
+          </div>
+          <div class="text-3xl font-bold mb-1" style="color:#f1f5f9;">127</div>
+          <div class="flex items-center gap-1 text-xs" style="color:#22c55e;">
+            <i data-lucide="trending-up" class="w-3 h-3"></i> +5 bulan ini
+          </div>
+        </div>
+        <div class="stat-card glass-card rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Hadir Hari Ini</div>
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(20,184,166,0.15);">
+              <i data-lucide="user-check" class="w-4 h-4" style="color:#14b8a6;"></i>
+            </div>
+          </div>
+          <div class="text-3xl font-bold mb-1" style="color:#f1f5f9;" id="statHadir">112</div>
+          <div class="flex items-center gap-1 text-xs" style="color:#22c55e;">
+            <i data-lucide="trending-up" class="w-3 h-3"></i> 88.2% kehadiran
+          </div>
+        </div>
+        <div class="stat-card glass-card rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Izin / Cuti</div>
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(234,179,8,0.15);">
+              <i data-lucide="calendar-off" class="w-4 h-4" style="color:#eab308;"></i>
+            </div>
+          </div>
+          <div class="text-3xl font-bold mb-1" style="color:#f1f5f9;">9</div>
+          <div class="flex items-center gap-1 text-xs" style="color:#f97316;">
+            <i data-lucide="clock" class="w-3 h-3"></i> 3 pending approval
+          </div>
+        </div>
+        <div class="stat-card glass-card rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Tidak Hadir</div>
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(239,68,68,0.15);">
+              <i data-lucide="user-x" class="w-4 h-4" style="color:#ef4444;"></i>
+            </div>
+          </div>
+          <div class="text-3xl font-bold mb-1" style="color:#f1f5f9;">6</div>
+          <div class="flex items-center gap-1 text-xs" style="color:#ef4444;">
+            <i data-lucide="trending-down" class="w-3 h-3"></i> 4.7% absen
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-5 mb-6">
+        <!-- Chart -->
+        <div class="col-span-2 glass-card rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-semibold" style="color:#f1f5f9;">Grafik Kehadiran</h3>
+              <p class="text-xs mt-0.5" style="color:#64748b;">Performa kehadiran bulanan tahun 2026</p>
+            </div>
+            <div class="flex gap-2">
+              <button class="px-3 py-1.5 text-xs rounded-lg font-medium" style="background:#f97316;color:white;">Bulanan</button>
+              <button class="px-3 py-1.5 text-xs rounded-lg font-medium hover:bg-white/5 transition-colors" style="color:#64748b; border:1px solid #2d2d4a;">Mingguan</button>
+            </div>
+          </div>
+          <canvas id="attendanceChart" height="120"></canvas>
+        </div>
+
+        <!-- Department Breakdown -->
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="font-semibold mb-1" style="color:#f1f5f9;">Distribusi Departemen</h3>
+          <p class="text-xs mb-4" style="color:#64748b;">Jumlah karyawan per divisi</p>
+          <canvas id="deptChart" height="160"></canvas>
+          <div class="mt-4 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:#f97316;"></span><span style="color:#94a3b8;">Engineering</span></div>
+              <span style="color:#f1f5f9;">38</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:#14b8a6;"></span><span style="color:#94a3b8;">Marketing</span></div>
+              <span style="color:#f1f5f9;">24</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:#8b5cf6;"></span><span style="color:#94a3b8;">Finance</span></div>
+              <span style="color:#f1f5f9;">19</span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:#eab308;"></span><span style="color:#94a3b8;">HR & Support</span></div>
+              <span style="color:#f1f5f9;">46</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-5">
+        <!-- Recent Attendance -->
+        <div class="glass-card rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold" style="color:#f1f5f9;">Absensi Terbaru</h3>
+            <button class="text-xs font-medium" style="color:#f97316;" onclick="navigate('laporan')">Lihat Semua →</button>
+          </div>
+          <div class="space-y-3" id="recentAttendance">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <!-- Leave Requests -->
+        <div class="glass-card rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold" style="color:#f1f5f9;">Pengajuan Cuti Terbaru</h3>
+            <button class="text-xs font-medium" style="color:#f97316;" onclick="navigate('cuti')">Lihat Semua →</button>
+          </div>
+          <div class="space-y-3" id="recentLeave">
+            <!-- filled by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== ABSENSI PAGE ======== -->
+    <div id="page-absensi" class="page fade-in">
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold" style="color:#f1f5f9;">Absensi</h1>
+          <p class="text-sm mt-1" style="color:#64748b;">Rekam kehadiran masuk dan pulang dengan verifikasi lokasi & foto</p>
+        </div>
+        <div class="flex items-center gap-2 text-sm px-4 py-2 rounded-xl" style="background:#141420; border:1px solid #2d2d4a;">
+          <i data-lucide="clock" class="w-4 h-4" style="color:#f97316;"></i>
+          <span id="liveTime" style="color:#f1f5f9; font-variant-numeric: tabular-nums;"></span>
+        </div>
+      </div>
+
+      <!-- Absensi Tabs -->
+      <div class="flex gap-2 mb-6">
+        <button id="tabMasuk" class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all" style="background:linear-gradient(135deg,#f97316,#ea6c0a);color:white;" onclick="switchAttendanceTab('masuk')">
+          <i data-lucide="log-in" class="w-4 h-4 inline mr-1"></i> Absen Masuk
+        </button>
+        <button id="tabPulang" class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-white/5" style="color:#94a3b8; border:1px solid #2d2d4a;" onclick="switchAttendanceTab('pulang')">
+          <i data-lucide="log-out" class="w-4 h-4 inline mr-1"></i> Absen Pulang
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6">
+        <!-- Camera Section -->
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="font-semibold mb-4 flex items-center gap-2" style="color:#f1f5f9;">
+            <i data-lucide="camera" class="w-4 h-4" style="color:#f97316;"></i>
+            Ambil Foto Selfie
+          </h3>
+
+          <div class="camera-container mb-4" style="background:#0a0a0f; aspect-ratio:4/3;">
+            <video id="cameraFeed" class="w-full h-full object-cover rounded-xl" autoplay playsinline style="display:block;"></video>
+            <canvas id="captureCanvas" class="w-full h-full object-cover rounded-xl" style="display:none;"></canvas>
+            <div id="cameraPlaceholder" class="w-full h-full flex flex-col items-center justify-center rounded-xl" style="background:#141420; display:none;">
+              <i data-lucide="camera-off" class="w-12 h-12 mb-3" style="color:#3d3d5c;"></i>
+              <p class="text-sm" style="color:#64748b;">Kamera belum aktif</p>
+              <p class="text-xs mt-1" style="color:#3d3d5c;">Klik "Aktifkan Kamera" untuk mulai</p>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <button id="btnStartCamera" class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2" onclick="startCamera()">
+              <i data-lucide="video" class="w-4 h-4"></i> Aktifkan Kamera
+            </button>
+            <button id="btnCapture" class="flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all" style="background:#22223a; color:#64748b; cursor:not-allowed;" disabled onclick="capturePhoto()">
+              <i data-lucide="aperture" class="w-4 h-4"></i> Ambil Foto
+            </button>
+          </div>
+          <button id="btnRetake" class="w-full mt-2 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-white/5" style="color:#64748b; border:1px solid #2d2d4a; display:none;" onclick="retakePhoto()">
+            <i data-lucide="rotate-ccw" class="w-4 h-4 inline mr-1"></i> Ambil Ulang
+          </button>
+        </div>
+
+        <!-- Location & Submit Section -->
+        <div class="space-y-4">
+          <!-- Map -->
+          <div class="glass-card rounded-2xl p-5">
+            <h3 class="font-semibold mb-4 flex items-center gap-2" style="color:#f1f5f9;">
+              <i data-lucide="map-pin" class="w-4 h-4" style="color:#f97316;"></i>
+              Lokasi GPS
+            </h3>
+            <div id="mapContainer" class="map-placeholder mb-3">
+              <div class="map-grid"></div>
+              <div class="map-circle"></div>
+              <div class="map-pin">
+                <svg width="32" height="40" viewBox="0 0 24 30"><path d="M12 0C7.58 0 4 3.58 4 8c0 6 8 16 8 16s8-10 8-16c0-4.42-3.58-8-8-8zm0 11c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" fill="#f97316"/></svg>
+              </div>
+              <div class="absolute inset-0 flex flex-col items-center justify-end pb-6">
+                <span class="text-xs font-medium px-3 py-1 rounded-full" style="background:rgba(0,0,0,0.7); color:#94a3b8; backdrop-filter:blur(4px);" id="locationStatus">Mendeteksi lokasi...</span>
+              </div>
+            </div>
+            <div id="locationInfo" class="text-xs space-y-1.5" style="color:#94a3b8; display:none;">
+              <div class="flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-3 h-3 flex-shrink-0" style="color:#f97316;"></i>
+                <span id="locationAddress" class="font-medium" style="color:#f1f5f9;"></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="crosshair" class="w-3 h-3 flex-shrink-0" style="color:#14b8a6;"></i>
+                <span id="locationCoords"></span>
+              </div>
+            </div>
+            <button id="btnGetLocation" class="w-full mt-3 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2" style="background:#141420; border:1px solid #2d2d4a; color:#94a3b8;" onclick="getLocation()">
+              <i data-lucide="crosshair" class="w-4 h-4"></i> <span id="locationBtnText">Dapatkan Lokasi</span>
+            </button>
+          </div>
+
+          <!-- Form -->
+          <div class="glass-card rounded-2xl p-5">
+            <h3 class="font-semibold mb-4 flex items-center gap-2" style="color:#f1f5f9;">
+              <i data-lucide="user" class="w-4 h-4" style="color:#f97316;"></i>
+              Data Karyawan
+            </h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs font-medium mb-1.5 block" style="color:#64748b;">Pilih Karyawan</label>
+                <select id="employeeSelect">
+                  <option value="">-- Pilih Karyawan --</option>
+                  <option value="1">Ahmad Fauzi — Engineering</option>
+                  <option value="2">Siti Rahma — Marketing</option>
+                  <option value="3">Budi Santoso — Finance</option>
+                  <option value="4">Dewi Lestari — HR</option>
+                  <option value="5">Reza Pratama — Engineering</option>
+                  <option value="6">Nurul Hidayah — Support</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-medium mb-1.5 block" style="color:#64748b;">Catatan</label>
+                <textarea id="attendanceNote" rows="2" placeholder="Catatan opsional..." style="resize:none;"></textarea>
+              </div>
+            </div>
+
+            <button id="btnSubmitAttendance" class="btn-primary w-full mt-4 py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2" onclick="submitAttendance()">
+              <i data-lucide="check-circle" class="w-4 h-4"></i>
+              <span id="submitBtnText">Catat Absen Masuk</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Preview -->
+      <div id="attendanceResult" class="mt-6 glass-card rounded-2xl p-5" style="display:none;">
+        <h3 class="font-semibold mb-4 flex items-center gap-2" style="color:#22c55e;">
+          <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+          Absensi Berhasil Direkam!
+        </h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-xs mb-2" style="color:#64748b;">Foto dengan Cap GPS:</p>
+            <div id="stampedPhotoContainer" class="relative rounded-xl overflow-hidden" style="aspect-ratio:3/4; background:#0a0a0f;">
+              <canvas id="stampedCanvas" class="w-full h-full object-cover"></canvas>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div class="p-3 rounded-xl" style="background:#141420;">
+              <p class="text-xs mb-1" style="color:#64748b;">Karyawan</p>
+              <p class="font-semibold text-sm" style="color:#f1f5f9;" id="resultName">-</p>
+            </div>
+            <div class="p-3 rounded-xl" style="background:#141420;">
+              <p class="text-xs mb-1" style="color:#64748b;">Tipe Absensi</p>
+              <p class="font-semibold text-sm" id="resultType">-</p>
+            </div>
+            <div class="p-3 rounded-xl" style="background:#141420;">
+              <p class="text-xs mb-1" style="color:#64748b;">Waktu</p>
+              <p class="font-semibold text-sm" style="color:#f1f5f9;" id="resultTime">-</p>
+            </div>
+            <div class="p-3 rounded-xl" style="background:#141420;">
+              <p class="text-xs mb-1" style="color:#64748b;">Lokasi</p>
+              <p class="font-semibold text-sm" style="color:#f1f5f9;" id="resultLocation">-</p>
+            </div>
+            <div class="p-3 rounded-xl" style="background:#141420;">
+              <p class="text-xs mb-1" style="color:#64748b;">Koordinat</p>
+              <p class="font-semibold text-sm" style="color:#14b8a6;" id="resultCoords">-</p>
+            </div>
+            <button class="w-full py-2.5 rounded-xl text-sm font-semibold transition-all" style="background:#141420; border:1px solid #2d2d4a; color:#94a3b8;" onclick="downloadStampedPhoto()">
+              <i data-lucide="download" class="w-4 h-4 inline mr-1"></i> Download Foto
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Attendance Log -->
+      <div class="mt-6 glass-card rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold" style="color:#f1f5f9;">Log Absensi Hari Ini</h3>
+          <span class="text-xs px-2 py-1 rounded-lg" style="background:rgba(249,115,22,0.1);color:#f97316;" id="todayDateLabel"></span>
+        </div>
+        <div id="todayLog" class="space-y-2">
+          <p class="text-sm text-center py-8" style="color:#3d3d5c;">Belum ada absensi hari ini</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== KARYAWAN PAGE ======== -->
+    <div id="page-karyawan" class="page fade-in">
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold" style="color:#f1f5f9;">Manajemen Karyawan</h1>
+          <p class="text-sm mt-1" style="color:#64748b;">Kelola data seluruh karyawan perusahaan</p>
+        </div>
+        <button class="btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center gap-2" onclick="openEmployeeModal()">
+          <i data-lucide="plus" class="w-4 h-4"></i> Tambah Karyawan
+        </button>
+      </div>
+
+      <!-- Filter Row -->
+      <div class="glass-card rounded-2xl p-4 mb-5 flex items-center gap-4">
+        <div class="flex gap-2">
+          <button class="px-3 py-1.5 text-xs rounded-lg font-medium transition-all" style="background:#f97316;color:white;" id="filterAll" onclick="filterEmployees('all')">Semua</button>
+          <button class="px-3 py-1.5 text-xs rounded-lg font-medium transition-all hover:bg-white/5" style="color:#64748b; border:1px solid #2d2d4a;" id="filterActive" onclick="filterEmployees('aktif')">Aktif</button>
+          <button class="px-3 py-1.5 text-xs rounded-lg font-medium transition-all hover:bg-white/5" style="color:#64748b; border:1px solid #2d2d4a;" id="filterInactive" onclick="filterEmployees('nonaktif')">Non-Aktif</button>
+        </div>
+        <div class="flex-1 relative">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style="color:#64748b;"></i>
+          <input type="text" id="empSearch" placeholder="Cari karyawan..." class="pl-9" onkeyup="searchEmployees()" />
+        </div>
+        <button class="px-3 py-2 rounded-xl text-sm flex items-center gap-2 transition-all hover:bg-white/5" style="color:#64748b; border:1px solid #2d2d4a;">
+          <i data-lucide="download" class="w-4 h-4"></i> Export
+        </button>
+      </div>
+
+      <!-- Table -->
+      <div class="glass-card rounded-2xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr style="border-bottom:1px solid #1a1a2e;">
+              <th class="text-left px-5 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Karyawan</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">NIK</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Jabatan</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Departemen</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Status</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Bergabung</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="employeeTableBody">
+            <!-- filled by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======== LAPORAN PAGE ======== -->
+    <div id="page-laporan" class="page fade-in">
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold" style="color:#f1f5f9;">Laporan Absensi</h1>
+          <p class="text-sm mt-1" style="color:#64748b;">Rekap kehadiran karyawan per periode</p>
+        </div>
+        <button class="btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center gap-2">
+          <i data-lucide="download" class="w-4 h-4"></i> Export Excel
+        </button>
+      </div>
+
+      <!-- Filters -->
+      <div class="glass-card rounded-2xl p-4 mb-5 flex items-center gap-4 flex-wrap">
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-medium" style="color:#64748b;">Periode:</label>
+          <input type="date" id="reportFrom" class="text-xs" style="width:140px;" />
+          <span class="text-xs" style="color:#64748b;">s/d</span>
+          <input type="date" id="reportTo" class="text-xs" style="width:140px;" />
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-medium" style="color:#64748b;">Dept:</label>
+          <select id="reportDept" class="text-xs" style="width:160px;">
+            <option value="">Semua Departemen</option>
+            <option>Engineering</option>
+            <option>Marketing</option>
+            <option>Finance</option>
+            <option>HR</option>
+            <option>Support</option>
+          </select>
+        </div>
+        <button class="btn-primary px-4 py-2 rounded-xl text-xs font-semibold text-white" onclick="generateReport()">
+          <i data-lucide="filter" class="w-3 h-3 inline mr-1"></i> Filter
+        </button>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-4 gap-4 mb-5">
+        <div class="glass-card rounded-xl p-4 text-center">
+          <div class="text-2xl font-bold" style="color:#22c55e;">94.2%</div>
+          <div class="text-xs mt-1" style="color:#64748b;">Tingkat Kehadiran</div>
+        </div>
+        <div class="glass-card rounded-xl p-4 text-center">
+          <div class="text-2xl font-bold" style="color:#f97316;">08:12</div>
+          <div class="text-xs mt-1" style="color:#64748b;">Rata-rata Check-in</div>
+        </div>
+        <div class="glass-card rounded-xl p-4 text-center">
+          <div class="text-2xl font-bold" style="color:#14b8a6;">17:34</div>
+          <div class="text-xs mt-1" style="color:#64748b;">Rata-rata Check-out</div>
+        </div>
+        <div class="glass-card rounded-xl p-4 text-center">
+          <div class="text-2xl font-bold" style="color:#eab308;">12</div>
+          <div class="text-xs mt-1" style="color:#64748b;">Total Terlambat</div>
+        </div>
+      </div>
+
+      <!-- Report Table -->
+      <div class="glass-card rounded-2xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr style="border-bottom:1px solid #1a1a2e;">
+              <th class="text-left px-5 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Karyawan</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Tanggal</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Masuk</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Pulang</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Durasi</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Lokasi</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Status</th>
+            </tr>
+          </thead>
+          <tbody id="reportTableBody">
+            <!-- filled by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======== CUTI PAGE ======== -->
+    <div id="page-cuti" class="page fade-in">
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold" style="color:#f1f5f9;">Cuti & Izin</h1>
+          <p class="text-sm mt-1" style="color:#64748b;">Kelola pengajuan cuti dan izin karyawan</p>
+        </div>
+        <button class="btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center gap-2" onclick="openLeaveModal()">
+          <i data-lucide="plus" class="w-4 h-4"></i> Ajukan Cuti
+        </button>
+      </div>
+
+      <!-- Leave Stats -->
+      <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(234,179,8,0.15);">
+              <i data-lucide="clock" class="w-5 h-5" style="color:#eab308;"></i>
+            </div>
+            <div>
+              <div class="text-xl font-bold" style="color:#f1f5f9;">3</div>
+              <div class="text-xs" style="color:#64748b;">Pending</div>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(34,197,94,0.15);">
+              <i data-lucide="check-circle" class="w-5 h-5" style="color:#22c55e;"></i>
+            </div>
+            <div>
+              <div class="text-xl font-bold" style="color:#f1f5f9;">18</div>
+              <div class="text-xs" style="color:#64748b;">Disetujui</div>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(239,68,68,0.15);">
+              <i data-lucide="x-circle" class="w-5 h-5" style="color:#ef4444;"></i>
+            </div>
+            <div>
+              <div class="text-xl font-bold" style="color:#f1f5f9;">4</div>
+              <div class="text-xs" style="color:#64748b;">Ditolak</div>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:rgba(20,184,166,0.15);">
+              <i data-lucide="calendar" class="w-5 h-5" style="color:#14b8a6;"></i>
+            </div>
+            <div>
+              <div class="text-xl font-bold" style="color:#f1f5f9;">12</div>
+              <div class="text-xs" style="color:#64748b;">Sisa Jatah</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leave Table -->
+      <div class="glass-card rounded-2xl overflow-hidden">
+        <table class="w-full text-sm" id="leaveTable">
+          <thead>
+            <tr style="border-bottom:1px solid #1a1a2e;">
+              <th class="text-left px-5 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Karyawan</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Jenis</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Mulai</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Selesai</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Hari</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Alasan</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Status</th>
+              <th class="text-left px-4 py-4 text-xs font-semibold uppercase tracking-wider" style="color:#64748b;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="leaveTableBody">
+            <!-- filled by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======== SETTINGS PAGE ======== -->
+    <div id="page-settings" class="page fade-in">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold" style="color:#f1f5f9;">Pengaturan</h1>
+        <p class="text-sm mt-1" style="color:#64748b;">Konfigurasi sistem HR Management</p>
+      </div>
+      <div class="grid grid-cols-2 gap-5">
+        <div class="glass-card rounded-2xl p-6">
+          <h3 class="font-semibold mb-4" style="color:#f1f5f9;">Profil Perusahaan</h3>
+          <div class="space-y-3">
+            <div><label class="text-xs" style="color:#64748b;">Nama Perusahaan</label><input type="text" value="PT. Maju Bersama Indonesia" class="mt-1" /></div>
+            <div><label class="text-xs" style="color:#64748b;">Email</label><input type="email" value="admin@majubersama.co.id" class="mt-1" /></div>
+            <div><label class="text-xs" style="color:#64748b;">Alamat Kantor</label><textarea rows="2" class="mt-1" style="resize:none;">Jl. Sudirman No. 1, Jakarta Pusat</textarea></div>
+            <button class="btn-primary w-full py-2.5 rounded-xl text-sm font-semibold text-white">Simpan Perubahan</button>
+          </div>
+        </div>
+        <div class="glass-card rounded-2xl p-6">
+          <h3 class="font-semibold mb-4" style="color:#f1f5f9;">Aturan Absensi</h3>
+          <div class="space-y-3">
+            <div><label class="text-xs" style="color:#64748b;">Jam Masuk Standar</label><input type="text" value="08:00" class="mt-1" /></div>
+            <div><label class="text-xs" style="color:#64748b;">Jam Pulang Standar</label><input type="text" value="17:00" class="mt-1" /></div>
+            <div><label class="text-xs" style="color:#64748b;">Toleransi Terlambat (menit)</label><input type="text" value="15" class="mt-1" /></div>
+            <div><label class="text-xs" style="color:#64748b;">Radius Lokasi (meter)</label><input type="text" value="200" class="mt-1" /></div>
+            <button class="btn-primary w-full py-2.5 rounded-xl text-sm font-semibold text-white">Simpan Pengaturan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== ANALYTICS PAGE ======== -->
+    <div id="page-analytics" class="page fade-in">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold" style="color:#f1f5f9;">Analytics</h1>
+        <p class="text-sm mt-1" style="color:#64748b;">Analitik mendalam kehadiran dan produktivitas karyawan</p>
+      </div>
+      <div class="grid grid-cols-3 gap-5 mb-5">
+        <div class="col-span-2 glass-card rounded-2xl p-5">
+          <h3 class="font-semibold mb-4" style="color:#f1f5f9;">Tren Kehadiran Harian</h3>
+          <canvas id="weeklyChart" height="140"></canvas>
+        </div>
+        <div class="glass-card rounded-2xl p-5">
+          <h3 class="font-semibold mb-4" style="color:#f1f5f9;">Status Kehadiran</h3>
+          <canvas id="statusChart" height="160"></canvas>
+          <div class="mt-4 space-y-2">
+            <div class="flex items-center justify-between text-xs"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span><span style="color:#94a3b8;">Tepat Waktu</span></div><span style="color:#f1f5f9;">78%</span></div>
+            <div class="flex items-center justify-between text-xs"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-yellow-500"></span><span style="color:#94a3b8;">Terlambat</span></div><span style="color:#f1f5f9;">12%</span></div>
+            <div class="flex items-center justify-between text-xs"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-500"></span><span style="color:#94a3b8;">Absen</span></div><span style="color:#f1f5f9;">6%</span></div>
+            <div class="flex items-center justify-between text-xs"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full" style="background:#14b8a6;"></span><span style="color:#94a3b8;">Cuti/Izin</span></div><span style="color:#f1f5f9;">4%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ====== EMPLOYEE MODAL ====== -->
+<div id="employeeModal" class="modal-backdrop" onclick="closeIfBackdrop(event,'employeeModal')">
+  <div class="rounded-2xl p-6 w-full max-w-lg fade-in" style="background:#141420; border:1px solid #2d2d4a;">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-bold" style="color:#f1f5f9;" id="empModalTitle">Tambah Karyawan</h2>
+      <button onclick="closeModal('employeeModal')" class="p-1.5 rounded-lg hover:bg-white/5 transition-colors">
+        <i data-lucide="x" class="w-5 h-5" style="color:#64748b;"></i>
+      </button>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div><label class="text-xs mb-1 block" style="color:#64748b;">Nama Lengkap *</label><input type="text" id="empName" placeholder="Ahmad Fauzi" /></div>
+      <div><label class="text-xs mb-1 block" style="color:#64748b;">NIK *</label><input type="text" id="empNik" placeholder="EMP-001" /></div>
+      <div><label class="text-xs mb-1 block" style="color:#64748b;">Email *</label><input type="email" id="empEmail" placeholder="ahmad@company.co.id" /></div>
+      <div><label class="text-xs mb-1 block" style="color:#64748b;">No. Telepon</label><input type="text" id="empPhone" placeholder="+62 812 3456 7890" /></div>
+      <div><label class="text-xs mb-1 block" style="color:#64748b;">Jabatan *</label><input type="text" id="empPosition" placeholder="Software Engineer" /></div>
+      <div>
+        <label class="text-xs mb-1 block" style="color:#64748b;">Departemen *</label>
+        <select id="empDept">
+          <option value="">Pilih Departemen</option>
+          <option>Engineering</option><option>Marketing</option>
+          <option>Finance</option><option>HR</option><option>Support</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs mb-1 block" style="color:#64748b;">Status</label>
+        <select id="empStatus"><option value="aktif">Aktif</option><option value="nonaktif">Non-Aktif</option></select>
+      </div>
+      <div><label class="text-xs mb-1 block" style="color:#64748b;">Tanggal Bergabung</label><input type="date" id="empJoinDate" /></div>
+    </div>
+    <div class="flex gap-3 mt-5">
+      <button onclick="closeModal('employeeModal')" class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-white/5" style="color:#64748b; border:1px solid #2d2d4a;">Batal</button>
+      <button class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-semibold text-white" onclick="saveEmployee()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== LEAVE MODAL ====== -->
+<div id="leaveModal" class="modal-backdrop" onclick="closeIfBackdrop(event,'leaveModal')">
+  <div class="rounded-2xl p-6 w-full max-w-md fade-in" style="background:#141420; border:1px solid #2d2d4a;">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-bold" style="color:#f1f5f9;">Ajukan Cuti / Izin</h2>
+      <button onclick="closeModal('leaveModal')" class="p-1.5 rounded-lg hover:bg-white/5 transition-colors">
+        <i data-lucide="x" class="w-5 h-5" style="color:#64748b;"></i>
+      </button>
+    </div>
+    <div class="space-y-3">
+      <div>
+        <label class="text-xs mb-1 block" style="color:#64748b;">Karyawan</label>
+        <select id="leaveEmployee">
+          <option value="">-- Pilih Karyawan --</option>
+          <option>Ahmad Fauzi</option><option>Siti Rahma</option>
+          <option>Budi Santoso</option><option>Dewi Lestari</option>
+          <option>Reza Pratama</option><option>Nurul Hidayah</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs mb-1 block" style="color:#64748b;">Jenis</label>
+        <select id="leaveType">
+          <option>Cuti Tahunan</option><option>Cuti Sakit</option>
+          <option>Izin</option><option>Cuti Melahirkan</option><option>Cuti Besar</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs mb-1 block" style="color:#64748b;">Tanggal Mulai</label><input type="date" id="leaveStart" /></div>
+        <div><label class="text-xs mb-1 block" style="color:#64748b;">Tanggal Selesai</label><input type="date" id="leaveEnd" /></div>
+      </div>
+      <div><label class="text-xs mb-1 block" style="color:#64748b;">Alasan</label><textarea id="leaveReason" rows="3" placeholder="Jelaskan alasan cuti/izin..." style="resize:none;"></textarea></div>
+    </div>
+    <div class="flex gap-3 mt-5">
+      <button onclick="closeModal('leaveModal')" class="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all hover:bg-white/5" style="color:#64748b; border:1px solid #2d2d4a;">Batal</button>
+      <button class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-semibold text-white" onclick="saveLeave()">Ajukan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== SUCCESS TOAST ====== -->
+<div id="toast" class="fixed bottom-6 right-6 px-5 py-3.5 rounded-xl text-sm font-medium flex items-center gap-3 transition-all duration-300 translate-y-20 opacity-0 z-50" style="background:#22c55e; color:white; box-shadow:0 8px 32px rgba(34,197,94,0.3);">
+  <i data-lucide="check-circle" class="w-5 h-5"></i>
+  <span id="toastMsg">Berhasil!</span>
+</div>
+
+<script src="app.js"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>
