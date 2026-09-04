@@ -19,19 +19,41 @@ Route::get('/login', function () {
     return Auth::check() ? redirect()->route('dashboard') : view('auth.login');
 })->name('login');
 
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+
 Route::post('/login', function (Request $request) {
     $credentials = $request->validate([
         'email'    => ['required', 'email'],
         'password' => ['required'],
     ]);
 
+    $maxAttempts = 3;
+    $throttleKey = Str::lower($request->input('email')) . '|' . $request->ip();
+
+    if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
+        $seconds = RateLimiter::availableIn($throttleKey);
+        return back()->with('lockout_seconds', $seconds)->withErrors([
+            'email' => 'Terlalu banyak percobaan. Silakan coba lagi dalam ' . $seconds . ' detik.',
+        ])->onlyInput('email');
+    }
+
     if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        RateLimiter::clear($throttleKey);
         $request->session()->regenerate();
         return redirect()->intended(route('dashboard'));
     }
 
+    RateLimiter::hit($throttleKey, 60);
+    $retriesLeft = RateLimiter::retriesLeft($throttleKey, $maxAttempts);
+
+    $errorMsg = 'Email atau password salah.';
+    if ($retriesLeft > 0) {
+        $errorMsg .= ' Sisa percobaan: ' . $retriesLeft . 'x';
+    }
+
     return back()->withErrors([
-        'email' => 'Email atau password yang Anda masukkan salah.',
+        'email' => $errorMsg,
     ])->onlyInput('email');
 })->name('login.post');
 
@@ -42,10 +64,19 @@ Route::post('/logout', function (Request $request) {
     return redirect()->route('login');
 })->name('logout');
 
-// Forgot password placeholder
-Route::get('/forgot-password', function () {
-    return redirect()->route('login')->with('status', 'Silakan hubungi HRD untuk reset password akun Anda.');
-})->name('password.request');
+use App\Http\Controllers\ForgotPasswordController;
+
+// Lupa Password (OTP via Email)
+Route::middleware('guest')->group(function () {
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])->name('password.request');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendOtp'])->name('password.email');
+    
+    Route::get('/verify-otp', [ForgotPasswordController::class, 'showOtpForm'])->name('password.verify.form');
+    Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp'])->name('password.verify.post');
+    
+    Route::get('/reset-password', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset.form');
+    Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword'])->name('password.update');
+});
 
 // Protected Routes (Harus Login)
 Route::middleware('auth')->group(function () {
@@ -87,6 +118,15 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [KaryawanController::class, 'store'])->name('store');
         Route::put('/{id}', [KaryawanController::class, 'update'])->name('update');
         Route::delete('/{id}', [KaryawanController::class, 'destroy'])->name('destroy');
+    });
+
+    // PAYROLL & SLIP GAJI
+    Route::prefix('payroll')->name('payroll.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\PayrollController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\PayrollController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\PayrollController::class, 'store'])->name('store');
+        Route::get('/karyawan-info/{id}', [\App\Http\Controllers\PayrollController::class, 'getKaryawanInfo'])->name('info');
+        Route::get('/{id}/pdf', [\App\Http\Controllers\PayrollController::class, 'printPdf'])->name('pdf');
     });
 
     // PENGATURAN / PROFILE

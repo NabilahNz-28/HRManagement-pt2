@@ -14,12 +14,15 @@ class Karyawan extends Model
         'email',
         'no_telepon',
         'jabatan',
+        'toko',
         'jenis_kelamin',
         'tanggal_lahir',
         'alamat',
         'tanggal_bergabung',
         'status',
         'foto',
+        'hutang',
+        'uang_transport',
     ];
 
     public function user()
@@ -40,5 +43,10 @@ class Karyawan extends Model
     public function jatahCuti()
     {
         return $this->hasMany(JatahCuti::class, 'karyawan_id');
+    }
+
+    public function payrolls()
+    {
+        return $this->hasMany(Payroll::class, 'karyawan_id');
     }
 }

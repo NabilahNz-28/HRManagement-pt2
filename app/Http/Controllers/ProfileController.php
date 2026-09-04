@@ -12,7 +12,13 @@ class ProfileController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $karyawan = $user->karyawan ?: Karyawan::where('email', $user->email)->first();
+        // For HR/Admin who might not have a karyawan record, try to find or create one
+        $karyawan = null;
+        if ($user->karyawan) {
+            $karyawan = $user->karyawan;
+        } else {
+            $karyawan = Karyawan::where('email', $user->email)->first();
+        }
         return view('profile', compact('user', 'karyawan'));
     }
 
@@ -35,13 +41,15 @@ class ProfileController extends Controller
         }
         $user->save();
 
-        if ($user->karyawan) {
-            $user->karyawan->update([
+        // Update karyawan record if it exists
+        $karyawan = $user->karyawan ?: Karyawan::where('email', $user->email)->first();
+        if ($karyawan) {
+            $karyawan->update([
                 'nama_lengkap' => $request->name,
                 'no_telepon' => $request->no_telepon,
                 'alamat' => $request->alamat,
                 'tanggal_lahir' => $request->tanggal_lahir,
-                'jenis_kelamin' => $request->jenis_kelamin ?: 'L',
+                'jenis_kelamin' => $request->jenis_kelamin ?: ($karyawan->jenis_kelamin ?? 'L'),
             ]);
         }
 

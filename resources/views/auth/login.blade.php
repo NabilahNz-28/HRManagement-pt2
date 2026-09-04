@@ -56,7 +56,7 @@
             position: absolute;
             top: -120px; right: -120px;
             width: 500px; height: 500px;
-            background: radial-gradient(circle, rgba(255,107,0,0.08) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(29,78,216,0.08) 0%, transparent 70%);
             border-radius: 50%;
         }
         .login-bg::after {
@@ -126,9 +126,9 @@
             outline: none;
         }
         .input-field:focus {
-            border-color: #FF6B00;
+            border-color: #1d4ed8;
             background: #fff;
-            box-shadow: 0 0 0 3.5px rgba(255,107,0,0.10);
+            box-shadow: 0 0 0 3.5px rgba(29,78,216,0.10);
         }
         .input-field::placeholder { color: #9ca3af; }
         .input-field.has-right { padding-right: 42px; }
@@ -144,7 +144,7 @@
             transition: color 0.2s;
             font-size: 16px;
         }
-        .input-right-btn:hover { color: #FF6B00; }
+        .input-right-btn:hover { color: #1d4ed8; }
 
         /* ---- Label ---- */
         .field-label {
@@ -196,8 +196,8 @@
             background: #f9fafb;
         }
         .custom-checkbox:checked {
-            background: #FF6B00;
-            border-color: #FF6B00;
+            background: #1d4ed8;
+            border-color: #1d4ed8;
         }
         .custom-checkbox:checked::after {
             content: '';
@@ -222,47 +222,6 @@
             gap: 8px;
         }
 
-        /* ---- Decorative badge ---- */
-        .hr-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: linear-gradient(135deg, #fff4ec, #fff);
-            border: 1px solid #fed7aa;
-            border-radius: 999px;
-            padding: 4px 12px;
-            font-size: 11px;
-            font-weight: 600;
-            color: #FF6B00;
-            margin-bottom: 16px;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-        }
-
-        /* ---- Features strip ---- */
-        .feature-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #f3f4f6;
-        }
-        .feature-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 999px;
-            padding: 4px 10px;
-            font-size: 11px;
-            color: #6b7280;
-            font-weight: 500;
-        }
-        .feature-chip i { font-size: 12px; color: #FF6B00; }
-
         /* ---- Floating decoration ---- */
         .deco-circle {
             position: absolute;
@@ -283,18 +242,10 @@
     <div class="login-bg flex items-center justify-center px-4 py-8">
 
         {{-- Decorative circles --}}
-        <div class="deco-circle" style="width:300px;height:300px;background:radial-gradient(circle,rgba(255,107,0,0.05),transparent);top:-60px;right:10%;"></div>
+        <div class="deco-circle" style="width:300px;height:300px;background:radial-gradient(circle,rgba(29,78,216,0.05),transparent);top:-60px;right:10%;"></div>
         <div class="deco-circle" style="width:200px;height:200px;background:radial-gradient(circle,rgba(29,78,216,0.05),transparent);bottom:20px;left:5%;"></div>
 
         <div class="login-card">
-
-            {{-- Top brand badge --}}
-            <div class="text-center">
-                <div class="hr-badge">
-                    <i class="fi fi-ts-people-poll" style="font-size:11px;"></i>
-                    HR Management System
-                </div>
-            </div>
 
             {{-- Logo Row: Bingxue + Mixue --}}
             <div class="logo-row">
@@ -303,7 +254,7 @@
                      class="logo-img"
                      style="height:52px; width:auto;">
                 <div class="logo-divider"></div>
-                <img src="{{ asset('img/mixue.png') }}"
+                <img src="{{ asset('img/mixue1.jpg') }}"
                      alt="Mixue Logo"
                      class="logo-img"
                      style="height:52px; width:auto;">
@@ -329,7 +280,7 @@
                     <i class="fi fi-rr-exclamation" style="margin-top:1px;flex-shrink:0;"></i>
                     <div>
                         @foreach ($errors->all() as $error)
-                            <p>{{ $error }}</p>
+                            <p class="error-text">{{ $error }}</p>
                         @endforeach
                     </div>
                 </div>
@@ -364,15 +315,13 @@
                 <div class="form-section">
                     <div class="flex items-center justify-between mb-1.5">
                         <label for="password" class="field-label" style="margin-bottom:0;">Password</label>
-                        @if (Route::has('password.request'))
-                            <a href="{{ route('password.request') }}"
-                               class="text-xs font-medium"
-                               style="color:#FF6B00; text-decoration:none;"
-                               onmouseover="this.style.textDecoration='underline'"
-                               onmouseout="this.style.textDecoration='none'">
-                                Lupa password?
-                            </a>
-                        @endif
+                        <a href="{{ route('password.request') }}"
+                           class="text-xs font-medium"
+                           style="color:#1d4ed8; text-decoration:none;"
+                           onmouseover="this.style.textDecoration='underline'"
+                           onmouseout="this.style.textDecoration='none'">
+                            Lupa password?
+                        </a>
                     </div>
                     <div class="input-group">
                         <span class="input-icon">
@@ -422,27 +371,7 @@
                 </a>
             </div>
 
-            {{-- Feature chips --}}
-            <div class="feature-chips">
-                <span class="feature-chip">
-                    <i class="fi fi-ts-chart-line-up"></i> Laporan Realtime
-                </span>
-                <span class="feature-chip">
-                    <i class="fi fi-tr-inbox-in"></i> Absen Masuk
-                </span>
-                <span class="feature-chip">
-                    <i class="fi fi-tr-inbox-out"></i> Absen Pulang
-                </span>
-                <span class="feature-chip">
-                    <i class="fi fi-tr-file-spreadsheet"></i> Export Excel
-                </span>
-                <span class="feature-chip">
-                    <i class="fi fi-ts-people-poll"></i> Manajemen SDM
-                </span>
-                <span class="feature-chip">
-                    <i class="fi fi-tr-rotate-left"></i> Riwayat Absensi
-                </span>
-            </div>
+
 
         </div>
     </div>
@@ -478,6 +407,31 @@
                 input.parentElement.querySelector('.input-icon').style.color = '#9ca3af';
             });
         });
+
+        // Dynamic Lockout Timer
+        @if(session('lockout_seconds'))
+            let seconds = {{ session('lockout_seconds') }};
+            const errorText = document.querySelector('.error-text');
+            if (errorText) {
+                const interval = setInterval(() => {
+                    seconds--;
+                    if (seconds <= 0) {
+                        clearInterval(interval);
+                        errorText.innerHTML = "Waktu tunggu selesai. Silakan coba login kembali.";
+                        document.getElementById('btnLogin').disabled = false;
+                        document.getElementById('btnLogin').style.opacity = '1';
+                    } else {
+                        errorText.innerHTML = "Terlalu banyak percobaan. Silakan coba lagi dalam " + seconds + " detik.";
+                        document.getElementById('btnLogin').disabled = true;
+                        document.getElementById('btnLogin').style.opacity = '0.5';
+                    }
+                }, 1000);
+                
+                // Set initial disabled state
+                document.getElementById('btnLogin').disabled = true;
+                document.getElementById('btnLogin').style.opacity = '0.5';
+            }
+        @endif
     </script>
 </body>
 </html>

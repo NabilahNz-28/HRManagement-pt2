@@ -31,17 +31,23 @@
                 <option value="cuti" {{ $status == 'cuti' ? 'selected' : '' }}>Cuti</option>
             </select>
 
-            <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
+            <select name="toko" class="form-input text-xs py-2.5 min-w-[130px]">
+                <option value="">Semua Toko</option>
+                <option value="Mixue" {{ request('toko') == 'Mixue' ? 'selected' : '' }}>Mixue</option>
+                <option value="Bingxue" {{ request('toko') == 'Bingxue' ? 'selected' : '' }}>Bingxue</option>
+            </select>
+
+            <button type="submit" class="px-5 py-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-xl text-xs font-bold transition-all shadow-sm">
                 Cari
             </button>
-            @if($search || $jabatan || $status)
+            @if($search || $jabatan || $status || request('toko'))
                 <a href="{{ route('karyawan.index') }}" class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-semibold">
                     Reset
                 </a>
             @endif
         </form>
 
-        <button onclick="document.getElementById('modalTambah').classList.remove('hidden')" class="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs rounded-xl flex items-center gap-2 shadow-sm transition-all cursor-pointer">
+        <button onclick="document.getElementById('modalTambah').classList.remove('hidden')" class="px-5 py-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white font-bold text-xs rounded-xl flex items-center gap-2 shadow-sm transition-all cursor-pointer">
             <i class="fi fi-rr-plus"></i> Tambah Karyawan
         </button>
 
@@ -187,6 +193,14 @@
                 <span class="text-slate-400 font-medium block mb-1">Alamat Domisili:</span>
                 <p class="font-semibold text-slate-800" id="detailAlamat">-</p>
             </div>
+            <div class="p-3 bg-red-50 rounded-xl flex justify-between items-center">
+                <span class="text-red-500 font-medium">Hutang Karyawan:</span>
+                <span class="font-bold text-red-600 text-sm" id="detailHutang">Rp 0</span>
+            </div>
+            <div class="p-3 bg-emerald-50 rounded-xl flex justify-between items-center">
+                <span class="text-emerald-500 font-medium">Uang Transport (Per Bulan):</span>
+                <span class="font-bold text-emerald-600 text-sm" id="detailTransport">Rp 0</span>
+            </div>
         </div>
 
         <div class="pt-5 border-t border-slate-100 mt-5 flex justify-end">
@@ -222,15 +236,18 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="form-label text-xs">Email Perusahaan *</label>
-                    <input type="email" name="email" id="editEmail" required class="form-input text-xs">
-                </div>
-                <div>
                     <label class="form-label text-xs">Jabatan *</label>
                     <select name="jabatan" id="editJabatan" required class="form-input text-xs">
                         <option value="Karyawan">Karyawan</option>
                         <option value="Kepala Toko">Kepala Toko</option>
                         <option value="Management">Management</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label text-xs">Toko *</label>
+                    <select name="toko" id="editToko" required class="form-input text-xs">
+                        <option value="Mixue">Mixue</option>
+                        <option value="Bingxue">Bingxue</option>
                     </select>
                 </div>
             </div>
@@ -255,12 +272,30 @@
                     <input type="date" name="tanggal_lahir" id="editTglLahir" class="form-input text-xs">
                 </div>
                 <div>
+                    <label class="form-label text-xs">Tanggal Bergabung</label>
+                    <input type="date" name="tanggal_bergabung" id="editTglGabung" class="form-input text-xs">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
                     <label class="form-label text-xs">Status Karyawan *</label>
                     <select name="status" id="editStatus" required class="form-input text-xs">
                         <option value="aktif">Aktif</option>
                         <option value="nonaktif">Non-Aktif</option>
                         <option value="cuti">Cuti</option>
                     </select>
+                </div>
+                <div>
+                    <label class="form-label text-xs">Saldo Hutang (Rp)</label>
+                    <input type="number" name="hutang" id="editHutang" min="0" step="1000" placeholder="0" class="form-input text-xs">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-1 gap-4">
+                <div>
+                    <label class="form-label text-xs">Uang Transport Bulanan (Rp)</label>
+                    <input type="number" name="uang_transport" id="editTransport" min="0" step="1000" placeholder="0" class="form-input text-xs">
                 </div>
             </div>
 
@@ -315,7 +350,12 @@
                 </div>
                 <div>
                     <label class="form-label text-xs">Password Akun *</label>
-                    <input type="password" name="password" required value="karyawan123" class="form-input text-xs">
+                    <div class="relative">
+                        <input type="password" name="password" id="inputPassword" required value="karyawan123" class="form-input text-xs pr-10">
+                        <button type="button" onclick="togglePassword('inputPassword', 'eyeIcon')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none">
+                            <i id="eyeIcon" class="fi fi-rr-eye"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -329,10 +369,10 @@
                     </select>
                 </div>
                 <div>
-                    <label class="form-label text-xs">Jenis Kelamin *</label>
-                    <select name="jenis_kelamin" required class="form-input text-xs">
-                        <option value="L">Laki-Laki</option>
-                        <option value="P">Perempuan</option>
+                    <label class="form-label text-xs">Toko *</label>
+                    <select name="toko" required class="form-input text-xs">
+                        <option value="Mixue">Mixue</option>
+                        <option value="Bingxue">Bingxue</option>
                     </select>
                 </div>
             </div>
@@ -356,6 +396,17 @@
                 <div>
                     <label class="form-label text-xs">Alamat Domisili</label>
                     <input type="text" name="alamat" placeholder="Kota / Alamat" class="form-input text-xs">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="form-label text-xs">Saldo Hutang (Rp)</label>
+                    <input type="number" name="hutang" min="0" step="1000" value="0" placeholder="0" class="form-input text-xs">
+                </div>
+                <div>
+                    <label class="form-label text-xs">Uang Transport Bulanan (Rp)</label>
+                    <input type="number" name="uang_transport" min="0" step="1000" value="0" placeholder="0" class="form-input text-xs">
                 </div>
             </div>
 
@@ -391,6 +442,12 @@
         if (data.status === 'cuti') statusBadge = '<span class="badge badge-warning">Cuti</span>';
         document.getElementById('detailStatus').innerHTML = statusBadge;
 
+        let hutang = parseFloat(data.hutang) || 0;
+        document.getElementById('detailHutang').textContent = 'Rp ' + hutang.toLocaleString('id-ID');
+
+        let transport = parseFloat(data.uang_transport) || 0;
+        document.getElementById('detailTransport').textContent = 'Rp ' + transport.toLocaleString('id-ID');
+
         document.getElementById('modalDetail').classList.remove('hidden');
     }
 
@@ -402,13 +459,37 @@
         document.getElementById('editNik').value = data.nik;
         document.getElementById('editEmail').value = data.email;
         document.getElementById('editJabatan').value = data.jabatan;
+        let editToko = document.getElementById('editToko');
+        if (editToko) editToko.value = data.toko || 'Mixue';
         document.getElementById('editTelepon').value = data.no_telepon || '';
         document.getElementById('editJK').value = data.jenis_kelamin;
         document.getElementById('editTglLahir').value = data.tanggal_lahir || '';
         document.getElementById('editAlamat').value = data.alamat || '';
+        
+        let tglGabungField = document.getElementById('editTglGabung');
+        if (tglGabungField) tglGabungField.value = data.tanggal_bergabung || '';
+        
         document.getElementById('editStatus').value = data.status;
+        document.getElementById('editHutang').value = Math.round(parseFloat(data.hutang) || 0);
+        
+        let editTransport = document.getElementById('editTransport');
+        if (editTransport) editTransport.value = Math.round(parseFloat(data.uang_transport) || 0);
 
         document.getElementById('modalEdit').classList.remove('hidden');
+    }
+
+    function togglePassword(inputId, iconId) {
+        let input = document.getElementById(inputId);
+        let icon = document.getElementById(iconId);
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove('fi-rr-eye');
+            icon.classList.add('fi-rr-eye-crossed');
+        } else {
+            input.type = "password";
+            icon.classList.remove('fi-rr-eye-crossed');
+            icon.classList.add('fi-rr-eye');
+        }
     }
 </script>
 @endsection
