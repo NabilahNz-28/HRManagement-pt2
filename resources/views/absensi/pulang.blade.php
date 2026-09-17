@@ -60,7 +60,7 @@
 
                 {{-- Camera Feed Container --}}
                 <div class="relative rounded-2xl overflow-hidden bg-slate-900 aspect-[4/3] flex items-center justify-center border border-slate-200 shadow-inner">
-                    <video id="videoFeed" class="w-full h-full object-cover" autoplay playsinline></video>
+                    <video id="videoFeed" class="w-full h-full object-cover" autoplay playsinline style="transform: scaleX(-1);"></video>
                     <canvas id="photoCanvas" class="hidden w-full h-full object-cover"></canvas>
                     
                     {{-- Target Face Guide overlay --}}
@@ -196,13 +196,33 @@
         }
     }
 
+    let currentAddress = 'Memuat alamat...';
+
     function updateGPSUI(lat, lng, isAccurate) {
         document.getElementById('latInput').value = lat;
         document.getElementById('lngInput').value = lng;
         document.getElementById('coordsText').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         document.getElementById('gpsStatusText').textContent = isAccurate ? '✓ GPS Akurat (Terkunci)' : '📍 Default GPS (Jakarta)';
-        document.getElementById('lokasiInput').value = 'Kantor Pusat Bingxue & Mixue';
         initMap(lat, lng);
+
+        // Reverse geocoding untuk dapat nama jalan
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+            headers: { 'Accept-Language': 'id' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            let addr = data.address || {};
+            let street = addr.road || addr.neighbourhood || addr.suburb || '';
+            let city = addr.city || addr.town || addr.county || '';
+            currentAddress = street ? `${street}, ${city}` : (data.display_name || 'Lokasi tidak diketahui');
+            document.getElementById('addressText').textContent = currentAddress;
+            document.getElementById('lokasiInput').value = currentAddress;
+        })
+        .catch(() => {
+            currentAddress = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            document.getElementById('addressText').textContent = currentAddress;
+            document.getElementById('lokasiInput').value = currentAddress;
+        });
     }
 
     function startCamera() {
@@ -232,7 +252,12 @@
         let ctx = canvas.getContext('2d');
 
         if (stream && video.readyState >= 2) {
+            // Flip horizontally to un-mirror front camera
+            ctx.save();
+            ctx.translate(640, 0);
+            ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0, 640, 480);
+            ctx.restore();
         } else {
             let grad = ctx.createLinearGradient(0, 0, 640, 480);
             grad.addColorStop(0, '#064e3b');
@@ -295,9 +320,13 @@
         ctx.font = '12px Inter, sans-serif';
         ctx.fillText(`Lat: ${currentLat.toFixed(6)}, Long: ${currentLng.toFixed(6)}`, 20, stampY + 70);
 
+        ctx.fillStyle = '#FDE68A';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.fillText(`📍 ${currentAddress}`, 20, stampY + 88);
+
         ctx.fillStyle = '#F8FAFC';
         ctx.font = '11px Inter, sans-serif';
-        ctx.fillText(`${dateStr} — ${timeStr} | Verified by GPS Map Camera`, 20, stampY + 92);
+        ctx.fillText(`${dateStr} — ${timeStr} | Verified by GPS`, 20, stampY + 106);
 
         ctx.fillStyle = 'rgba(16, 185, 129, 0.25)';
         ctx.fillRect(w - 130, stampY + 16, 114, 26);
@@ -326,6 +355,14 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         detectGPS();
+
+        // Confirmation before submit (cannot retake after submission)
+        document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (confirm('Apakah kamu yakin ingin submit absen pulang? Setelah di-submit, foto tidak bisa diulang.')) {
+                this.submit();
+            }
+        });
     });
 </script>
 @endsection
