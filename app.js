@@ -9,6 +9,8 @@ let cameraStream = null;
 let photoTaken = false;
 let currentLocation = null;
 let editingEmployeeId = null;
+let dashboardInitialized = false;  // prevent looping re-init
+let analyticsInitialized = false;  // prevent looping re-init
 
 // --------- DATA ---------
 let employees = [
@@ -51,30 +53,26 @@ function navigate(page) {
     pageEl.classList.add('fade-in');
   }
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-  const links = document.querySelectorAll('.sidebar-link');
-  links.forEach(l => {
+  document.querySelectorAll('.sidebar-link').forEach(l => {
     if (l.getAttribute('onclick') && l.getAttribute('onclick').includes("'" + page + "'")) {
       l.classList.add('active');
     }
   });
-  // Trigger page-specific init
-  if (page === 'dashboard') initDashboard();
+  // Trigger page-specific init (guard against re-init loops)
+  if (page === 'dashboard') {
+    if (!dashboardInitialized) {
+      dashboardInitialized = true;
+      initDashboard();
+    }
+  }
   if (page === 'karyawan') renderEmployeeTable();
   if (page === 'laporan') renderReportTable();
   if (page === 'cuti') renderLeaveTable();
-  if (page === 'analytics') initAnalytics();
-  if (page === 'absensi') {
-    initAbsensi();
-    if (cameraStream) stopCamera();
-    photoTaken = false;
-    document.getElementById('cameraFeed').style.display = 'block';
-    document.getElementById('captureCanvas').style.display = 'none';
-    document.getElementById('btnCapture').disabled = true;
-    document.getElementById('btnCapture').style.background = '#22223a';
-    document.getElementById('btnCapture').style.color = '#64748b';
-    document.getElementById('btnCapture').style.cursor = 'not-allowed';
-    document.getElementById('btnRetake').style.display = 'none';
-    document.getElementById('attendanceResult').style.display = 'none';
+  if (page === 'analytics') {
+    if (!analyticsInitialized) {
+      analyticsInitialized = true;
+      initAnalytics();
+    }
   }
   lucide.createIcons();
 }
@@ -150,12 +148,16 @@ function getStatusStyle(status) {
 }
 
 function initCharts() {
+  // Attendance line chart
   const ctx1 = document.getElementById('attendanceChart');
   if (!ctx1) return;
-  if (ctx1._chart) ctx1._chart.destroy();
+  // Destroy existing chart instance if any
+  const existing1 = Chart.getChart(ctx1);
+  if (existing1) existing1.destroy();
+
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep'];
   const data = [88, 91, 89, 93, 95, 92, 94, 90, 88];
-  const chart1 = new Chart(ctx1, {
+  new Chart(ctx1, {
     type: 'line',
     data: {
       labels: months,
@@ -172,7 +174,7 @@ function initCharts() {
       }]
     },
     options: {
-      responsive: true, maintainAspectRatio: true,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a1a2e', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d2d4a', borderWidth: 1 } },
       scales: {
         x: { grid: { color: '#1a1a2e' }, ticks: { color: '#64748b', font: { size: 11 } } },
@@ -180,12 +182,14 @@ function initCharts() {
       }
     }
   });
-  ctx1._chart = chart1;
 
+  // Dept doughnut chart
   const ctx2 = document.getElementById('deptChart');
   if (!ctx2) return;
-  if (ctx2._chart) ctx2._chart.destroy();
-  const chart2 = new Chart(ctx2, {
+  const existing2 = Chart.getChart(ctx2);
+  if (existing2) existing2.destroy();
+
+  new Chart(ctx2, {
     type: 'doughnut',
     data: {
       labels: ['Engineering', 'Marketing', 'Finance', 'HR & Support'],
@@ -196,7 +200,6 @@ function initCharts() {
       plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a1a2e', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d2d4a', borderWidth: 1 } }
     }
   });
-  ctx2._chart = chart2;
 }
 
 // --------- ANALYTICS CHARTS ---------
@@ -204,8 +207,9 @@ function initAnalytics() {
   setTimeout(() => {
     const ctx3 = document.getElementById('weeklyChart');
     if (ctx3) {
-      if (ctx3._chart) ctx3._chart.destroy();
-      const chart3 = new Chart(ctx3, {
+      const existing3 = Chart.getChart(ctx3);
+      if (existing3) existing3.destroy();
+      new Chart(ctx3, {
         type: 'bar',
         data: {
           labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum'],
@@ -215,7 +219,7 @@ function initAnalytics() {
           ]
         },
         options: {
-          responsive: true, maintainAspectRatio: true,
+          responsive: true, maintainAspectRatio: false,
           plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } }, tooltip: { backgroundColor: '#1a1a2e', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d2d4a', borderWidth: 1 } },
           scales: {
             x: { grid: { color: '#1a1a2e' }, ticks: { color: '#64748b', font: { size: 11 } }, stacked: true },
@@ -223,12 +227,12 @@ function initAnalytics() {
           }
         }
       });
-      ctx3._chart = chart3;
     }
     const ctx4 = document.getElementById('statusChart');
     if (ctx4) {
-      if (ctx4._chart) ctx4._chart.destroy();
-      const chart4 = new Chart(ctx4, {
+      const existing4 = Chart.getChart(ctx4);
+      if (existing4) existing4.destroy();
+      new Chart(ctx4, {
         type: 'doughnut',
         data: {
           labels: ['Tepat Waktu', 'Terlambat', 'Absen', 'Cuti/Izin'],
@@ -239,7 +243,6 @@ function initAnalytics() {
           plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a1a2e', titleColor: '#f1f5f9', bodyColor: '#94a3b8', borderColor: '#2d2d4a', borderWidth: 1 } }
         }
       });
-      ctx4._chart = chart4;
     }
     lucide.createIcons();
   }, 100);
@@ -1015,9 +1018,386 @@ function showToast(msg, type) {
   }, 3200);
 }
 
+// --------- LOGOUT MODAL ---------
+function showLogoutModal() {
+  const modal = document.getElementById('logoutModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  lucide.createIcons();
+}
+function hideLogoutModal() {
+  const modal = document.getElementById('logoutModal');
+  if (modal) modal.style.display = 'none';
+}
+function confirmLogout() {
+  hideLogoutModal();
+  showToast('Anda telah keluar dari sistem', 'success');
+  setTimeout(() => {
+    if (window.location.pathname.includes('public')) {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = window.location.origin + '/HRManagement-pt2/public/logout';
+      const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+      if (tokenMeta) {
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden'; csrf.name = '_token';
+        csrf.value = tokenMeta.getAttribute('content');
+        form.appendChild(csrf);
+      }
+      document.body.appendChild(form);
+      form.submit();
+    } else {
+      window.location.href = window.location.origin + '/HRManagement-pt2/public/login';
+    }
+  }, 1500);
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { hideLogoutModal(); closeCropModal(); }
+});
+
+// --------- DARK / LIGHT MODE ---------
+let isDarkMode = true;
+
+function toggleTheme() {
+  isDarkMode = !isDarkMode;
+  applyTheme(isDarkMode);
+  localStorage.setItem('hrTheme', isDarkMode ? 'dark' : 'light');
+}
+
+function applyTheme(dark) {
+  const html = document.documentElement;
+  const themeIcon = document.getElementById('themeIcon');
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  const darkModeKnob = document.getElementById('darkModeKnob');
+
+  if (dark) {
+    html.classList.remove('light');
+    html.classList.add('dark');
+    if (themeIcon) { themeIcon.setAttribute('data-lucide', 'moon'); }
+    if (darkModeToggle) { darkModeToggle.style.background = '#f97316'; }
+    if (darkModeKnob) { darkModeKnob.style.right = '2px'; darkModeKnob.style.left = 'auto'; }
+  } else {
+    html.classList.remove('dark');
+    html.classList.add('light');
+    if (themeIcon) { themeIcon.setAttribute('data-lucide', 'sun'); }
+    if (darkModeToggle) { darkModeToggle.style.background = '#64748b'; }
+    if (darkModeKnob) { darkModeKnob.style.left = '2px'; darkModeKnob.style.right = 'auto'; }
+  }
+  lucide.createIcons();
+}
+
+function toggleNotif() {
+  const btn = document.getElementById('notifToggle');
+  const knob = document.getElementById('notifKnob');
+  const isOn = knob.style.left === '2px' || knob.style.left === '' || !knob.style.right;
+  if (isOn) {
+    btn.style.background = '#f97316';
+    knob.style.left = 'auto'; knob.style.right = '2px';
+    showToast('Notifikasi browser diaktifkan', 'success');
+  } else {
+    btn.style.background = '#3d3d5c';
+    knob.style.right = 'auto'; knob.style.left = '2px';
+    showToast('Notifikasi browser dinonaktifkan', 'error');
+  }
+}
+
+// --------- PROFILE MANAGEMENT ---------
+let profileData = {
+  name: 'Admin HR',
+  email: 'admin@company.co.id',
+  nik: 'ADM-001',
+  phone: '+62 812 0000 0001',
+  position: 'HR Administrator',
+  dept: 'HR',
+  photo: null
+};
+
+function loadProfileFromStorage() {
+  const saved = localStorage.getItem('hrProfile');
+  if (saved) {
+    try { profileData = { ...profileData, ...JSON.parse(saved) }; } catch(e) {}
+  }
+  applyProfileToUI();
+}
+
+function applyProfileToUI() {
+  // Sidebar
+  const sidebarName = document.querySelector('.sidebar .text-sm.font-medium');
+  const sidebarEmail = document.querySelector('.sidebar .text-xs.truncate');
+  if (sidebarName) sidebarName.textContent = profileData.name;
+  if (sidebarEmail) sidebarEmail.textContent = profileData.email;
+
+  // Topbar
+  const topbarName = document.getElementById('topbarName');
+  const topbarInitials = document.getElementById('topbarInitials');
+  const topbarAvatar = document.getElementById('topbarAvatar');
+  const initials = profileData.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  if (topbarName) topbarName.textContent = profileData.name.split(' ')[0];
+  if (topbarInitials) topbarInitials.textContent = initials;
+
+  // Settings page form
+  const pName = document.getElementById('profileName');
+  const pEmail = document.getElementById('profileEmail');
+  const pNik = document.getElementById('profileNik');
+  const pPhone = document.getElementById('profilePhone');
+  const pPos = document.getElementById('profilePosition');
+  const pDept = document.getElementById('profileDept');
+  if (pName) pName.value = profileData.name;
+  if (pEmail) pEmail.value = profileData.email;
+  if (pNik) pNik.value = profileData.nik;
+  if (pPhone) pPhone.value = profileData.phone;
+  if (pPos) pPos.value = profileData.position;
+  if (pDept) pDept.value = profileData.dept;
+
+  // Profile card
+  const cardName = document.getElementById('profileCardName');
+  const cardRole = document.getElementById('profileCardRole');
+  const avatarInitials = document.getElementById('profileAvatarInitials');
+  if (cardName) cardName.textContent = profileData.name;
+  if (cardRole) cardRole.textContent = profileData.email;
+  if (avatarInitials) avatarInitials.textContent = initials;
+  if (topbarInitials) topbarInitials.textContent = initials;
+
+  // Photo
+  if (profileData.photo) {
+    setProfilePhotoUI(profileData.photo);
+  }
+}
+
+function saveProfileInfo() {
+  profileData.name = document.getElementById('profileName').value.trim() || profileData.name;
+  profileData.email = document.getElementById('profileEmail').value.trim() || profileData.email;
+  profileData.nik = document.getElementById('profileNik').value.trim() || profileData.nik;
+  profileData.phone = document.getElementById('profilePhone').value.trim() || profileData.phone;
+  profileData.position = document.getElementById('profilePosition').value.trim() || profileData.position;
+  profileData.dept = document.getElementById('profileDept').value || profileData.dept;
+  const saveData = { ...profileData };
+  if (saveData.photo && saveData.photo.length > 100000) delete saveData.photo; // Don't save large photos in profile data
+  localStorage.setItem('hrProfile', JSON.stringify(saveData));
+  applyProfileToUI();
+  showToast('Informasi profil berhasil disimpan!', 'success');
+}
+
+function savePassword() {
+  const cur = document.getElementById('currentPass').value;
+  const nw = document.getElementById('newPass').value;
+  const conf = document.getElementById('confirmPass').value;
+  if (!cur) return showToast('Masukkan password saat ini', 'error');
+  if (nw.length < 8) return showToast('Password baru minimal 8 karakter', 'error');
+  if (nw !== conf) return showToast('Konfirmasi password tidak sesuai', 'error');
+  document.getElementById('currentPass').value = '';
+  document.getElementById('newPass').value = '';
+  document.getElementById('confirmPass').value = '';
+  showToast('Password berhasil diubah!', 'success');
+}
+
+// --------- PHOTO UPLOAD + CROP ---------
+let cropOriginalSrc = '';
+let cropDragging = false;
+let cropResizing = false;
+let cropResizeDir = '';
+let cropDragStartX = 0, cropDragStartY = 0;
+let cropBoxStartLeft = 0, cropBoxStartTop = 0;
+let cropBoxStartW = 0, cropBoxStartH = 0;
+
+function onPhotoSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) return showToast('File harus berupa gambar', 'error');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    cropOriginalSrc = e.target.result;
+    openCropModal(e.target.result);
+  };
+  reader.readAsDataURL(file);
+  // Reset input so same file can be re-selected
+  event.target.value = '';
+}
+
+function openCropModal(src) {
+  const modal = document.getElementById('cropModal');
+  const img = document.getElementById('cropImage');
+  img.src = src;
+  img.onload = () => {
+    // Center crop box
+    const area = document.getElementById('cropArea');
+    const areaW = area.offsetWidth;
+    const areaH = area.offsetHeight;
+    const size = Math.min(areaW, areaH) * 0.7;
+    const box = document.getElementById('cropBox');
+    box.style.width = size + 'px';
+    box.style.height = size + 'px';
+    box.style.left = ((areaW - size) / 2) + 'px';
+    box.style.top = ((areaH - size) / 2) + 'px';
+    lucide.createIcons();
+  };
+  modal.classList.add('show');
+}
+
+function closeCropModal() {
+  document.getElementById('cropModal').classList.remove('show');
+}
+
+function startDragCrop(e) {
+  if (e.target !== document.getElementById('cropBox')) return;
+  cropDragging = true;
+  const touch = e.touches ? e.touches[0] : e;
+  cropDragStartX = touch.clientX;
+  cropDragStartY = touch.clientY;
+  const box = document.getElementById('cropBox');
+  cropBoxStartLeft = parseInt(box.style.left) || 0;
+  cropBoxStartTop = parseInt(box.style.top) || 0;
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+function startResizeCrop(e, dir) {
+  cropResizing = true;
+  cropResizeDir = dir;
+  const touch = e.touches ? e.touches[0] : e;
+  cropDragStartX = touch.clientX;
+  cropDragStartY = touch.clientY;
+  const box = document.getElementById('cropBox');
+  cropBoxStartLeft = parseInt(box.style.left) || 0;
+  cropBoxStartTop = parseInt(box.style.top) || 0;
+  cropBoxStartW = box.offsetWidth;
+  cropBoxStartH = box.offsetHeight;
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+document.addEventListener('mousemove', (e) => {
+  if (!cropDragging && !cropResizing) return;
+  const area = document.getElementById('cropArea');
+  const box = document.getElementById('cropBox');
+  const areaRect = area.getBoundingClientRect();
+  const dx = e.clientX - cropDragStartX;
+  const dy = e.clientY - cropDragStartY;
+
+  if (cropDragging) {
+    let newL = cropBoxStartLeft + dx;
+    let newT = cropBoxStartTop + dy;
+    newL = Math.max(0, Math.min(newL, area.offsetWidth - box.offsetWidth));
+    newT = Math.max(0, Math.min(newT, area.offsetHeight - box.offsetHeight));
+    box.style.left = newL + 'px';
+    box.style.top = newT + 'px';
+  }
+  if (cropResizing) {
+    const minSize = 60;
+    let newW = cropBoxStartW, newH = cropBoxStartH;
+    let newL = cropBoxStartLeft, newT = cropBoxStartTop;
+    if (cropResizeDir.includes('e')) newW = Math.max(minSize, cropBoxStartW + dx);
+    if (cropResizeDir.includes('s')) newH = Math.max(minSize, cropBoxStartH + dy);
+    if (cropResizeDir.includes('w')) { newW = Math.max(minSize, cropBoxStartW - dx); newL = cropBoxStartLeft + (cropBoxStartW - newW); }
+    if (cropResizeDir.includes('n')) { newH = Math.max(minSize, cropBoxStartH - dy); newT = cropBoxStartTop + (cropBoxStartH - newH); }
+    // Keep square
+    const s = Math.min(newW, newH);
+    box.style.width = s + 'px';
+    box.style.height = s + 'px';
+    box.style.left = Math.max(0, Math.min(newL, area.offsetWidth - s)) + 'px';
+    box.style.top = Math.max(0, Math.min(newT, area.offsetHeight - s)) + 'px';
+  }
+});
+
+document.addEventListener('mouseup', () => { cropDragging = false; cropResizing = false; });
+document.addEventListener('touchend', () => { cropDragging = false; cropResizing = false; });
+
+function applyCrop() {
+  const area = document.getElementById('cropArea');
+  const img = document.getElementById('cropImage');
+  const box = document.getElementById('cropBox');
+  const areaRect = area.getBoundingClientRect();
+  const imgRect = img.getBoundingClientRect();
+
+  // Calculate actual image coordinates from box position
+  const scaleX = img.naturalWidth / imgRect.width;
+  const scaleY = img.naturalHeight / imgRect.height;
+  const boxLeft = parseInt(box.style.left) || 0;
+  const boxTop = parseInt(box.style.top) || 0;
+  const boxW = box.offsetWidth;
+  const boxH = box.offsetHeight;
+
+  // Offset relative to image within crop area
+  const imgOffsetX = imgRect.left - areaRect.left;
+  const imgOffsetY = imgRect.top - areaRect.top;
+  const srcX = Math.max(0, (boxLeft - imgOffsetX) * scaleX);
+  const srcY = Math.max(0, (boxTop - imgOffsetY) * scaleY);
+  const srcW = boxW * scaleX;
+  const srcH = boxH * scaleY;
+
+  const canvas = document.createElement('canvas');
+  const size = 300;
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, size, size);
+
+  const croppedDataURL = canvas.toDataURL('image/jpeg', 0.9);
+  setProfilePhotoUI(croppedDataURL);
+  profileData.photo = croppedDataURL;
+  // Save to localStorage
+  try { localStorage.setItem('hrProfilePhoto', croppedDataURL); } catch(e) {}
+  closeCropModal();
+  showToast('Foto profil berhasil diperbarui!', 'success');
+  // Show remove button
+  const removeBtn = document.getElementById('btnRemovePhoto');
+  if (removeBtn) removeBtn.style.display = '';
+}
+
+function setProfilePhotoUI(dataURL) {
+  const img = document.getElementById('profileAvatarImg');
+  const initials = document.getElementById('profileAvatarInitials');
+  const topbarAvatar = document.getElementById('topbarAvatar');
+  const topbarInitials = document.getElementById('topbarInitials');
+
+  if (img) { img.src = dataURL; img.style.display = 'block'; }
+  if (initials) initials.style.display = 'none';
+
+  // Update topbar avatar too
+  if (topbarAvatar) {
+    topbarAvatar.innerHTML = `<img src="${dataURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  }
+}
+
+function removeProfilePhoto() {
+  const img = document.getElementById('profileAvatarImg');
+  const initials = document.getElementById('profileAvatarInitials');
+  const removeBtn = document.getElementById('btnRemovePhoto');
+  const topbarAvatar = document.getElementById('topbarAvatar');
+  const topbarInitials = document.getElementById('topbarInitials');
+  if (img) { img.src = ''; img.style.display = 'none'; }
+  if (initials) initials.style.display = '';
+  if (removeBtn) removeBtn.style.display = 'none';
+  profileData.photo = null;
+  localStorage.removeItem('hrProfilePhoto');
+  if (topbarAvatar && topbarInitials) {
+    topbarAvatar.innerHTML = `<span id="topbarInitials">${topbarInitials.textContent || 'AD'}</span>`;
+    topbarAvatar.style.background = 'linear-gradient(135deg,#f97316,#14b8a6)';
+  }
+  showToast('Foto profil dihapus', 'success');
+}
+
 // --------- INIT ---------
 document.addEventListener('DOMContentLoaded', () => {
+  // Load saved theme
+  const savedTheme = localStorage.getItem('hrTheme');
+  isDarkMode = savedTheme !== 'light';
+  applyTheme(isDarkMode);
+
+  // Load profile
+  loadProfileFromStorage();
+  // Load saved photo separately (may be too large for JSON)
+  const savedPhoto = localStorage.getItem('hrProfilePhoto');
+  if (savedPhoto) {
+    profileData.photo = savedPhoto;
+    setProfilePhotoUI(savedPhoto);
+    const removeBtn = document.getElementById('btnRemovePhoto');
+    if (removeBtn) removeBtn.style.display = '';
+  }
+
   initDashboard();
+  dashboardInitialized = true;
+
   // Set default dates for report
   const today = formatDate(new Date());
   const reportFrom = document.getElementById('reportFrom');

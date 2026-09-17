@@ -2,62 +2,11 @@
 
 @section('title', 'Dashboard Karyawan')
 @section('header-title', 'Halo, ' . ($karyawan->nama_lengkap ?? Auth::user()->name))
-@section('header-subtitle', ($karyawan->jabatan->nama ?? 'Staff') . ' — ' . ($karyawan->departemen->nama ?? 'Bingxue & Mixue'))
+@section('header-subtitle', ($karyawan->jabatan ?? 'Staff') . ' — Bingxue & Mixue')
 
 @section('content')
 <div class="space-y-6">
 
-    {{-- Today's Attendance Banner Card --}}
-    <div class="card-white p-6 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white border-0 shadow-lg relative overflow-hidden">
-        {{-- Decorative circles --}}
-        <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-white/5 rounded-full blur-xl pointer-events-none"></div>
-        <div class="absolute right-40 -top-10 w-40 h-40 bg-orange-500/10 rounded-full blur-xl pointer-events-none"></div>
-
-        <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div>
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/90 text-xs font-semibold backdrop-blur-sm mb-3">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 live-dot"></span>
-                    Presensi Hari Ini &bull; {{ date('d F Y') }}
-                </div>
-                <h3 class="text-2xl font-black text-white tracking-tight">
-                    @if(!$absensiHariIni)
-                        Anda Belum Melakukan Absensi Masuk
-                    @elseif($absensiHariIni && !$absensiHariIni->jam_pulang)
-                        Sudah Check-In Masuk (Pukul {{ substr($absensiHariIni->jam_masuk, 0, 5) }} WIB)
-                    @else
-                        Presensi Selesai! Terima kasih atas dedikasi Anda.
-                    @endif
-                </h3>
-                <p class="text-xs text-slate-300 mt-1">
-                    @if(!$absensiHariIni)
-                        Batas toleransi kehadiran tepat waktu adalah pukul 08:15 WIB.
-                    @elseif($absensiHariIni && !$absensiHariIni->jam_pulang)
-                        Status: <strong class="text-emerald-400 font-bold uppercase">{{ $absensiHariIni->status }}</strong>. Jangan lupa absen pulang saat jam kerja berakhir.
-                    @else
-                        Jam Masuk: <strong>{{ substr($absensiHariIni->jam_masuk, 0, 5) }}</strong> &bull; Jam Pulang: <strong>{{ substr($absensiHariIni->jam_pulang, 0, 5) }}</strong> (Durasi: {{ round($absensiHariIni->durasi_menit / 60, 1) }} Jam)
-                    @endif
-                </p>
-            </div>
-
-            <div class="flex items-center gap-3 w-full sm:w-auto">
-                @if(!$absensiHariIni)
-                    <a href="{{ route('absensi.masuk') }}" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30 transition-all transform hover:-translate-y-0.5">
-                        <i class="fi fi-tr-inbox-in text-base"></i>
-                        Absen Masuk Sekarang
-                    </a>
-                @elseif($absensiHariIni && !$absensiHariIni->jam_pulang)
-                    <a href="{{ route('absensi.pulang') }}" class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30 transition-all transform hover:-translate-y-0.5">
-                        <i class="fi fi-tr-inbox-out text-base"></i>
-                        Absen Pulang Sekarang
-                    </a>
-                @else
-                    <span class="px-5 py-2.5 bg-white/10 text-emerald-300 rounded-xl text-xs font-bold flex items-center gap-2">
-                        <i class="fi fi-rr-check text-base"></i> Presensi Hari Ini Selesai
-                    </span>
-                @endif
-            </div>
-        </div>
-    </div>
 
     {{-- Stats Row --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

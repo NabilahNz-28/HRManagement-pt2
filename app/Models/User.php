@@ -39,12 +39,17 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === 'admin' || $this->role === 'superadmin';
     }
 
     public function isHR(): bool
     {
-        return $this->role === 'hr' || $this->role === 'admin';
+        return in_array($this->role, ['hr', 'admin', 'superadmin']);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'superadmin';
     }
 
     public function isKaryawan(): bool

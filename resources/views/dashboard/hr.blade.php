@@ -4,218 +4,247 @@
 @section('header-title', 'Dashboard Overview')
 @section('header-subtitle', 'Ringkasan performa kehadiran & SDM Bingxue & Mixue')
 
+@section('styles')
+<style>
+    /* Override card-white untuk compatibility dengan build baru */
+    .card-white {
+        background: #FFFFFF;
+        border: 1px solid #DDE4EF;
+        border-radius: 14px;
+        box-shadow: 0 1px 4px rgba(15,31,61,0.04);
+    }
+    .stat-number { font-size: 28px; font-weight: 800; line-height: 1; color: #0F1F3D; }
+    .stat-number-green { color: #16A34A; }
+    .stat-number-amber { color: #D97706; }
+    .stat-number-blue  { color: #2563EB; }
+    .stat-label-sm { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #7C8DAB; }
+    .stat-icon-box {
+        width: 48px; height: 48px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; flex-shrink: 0;
+    }
+    .badge-success { background: #DCFCE7; color: #15803D; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+    .badge-warning { background: #FEF3C7; color: #D97706; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+    .badge-info    { background: #DBEAFE; color: #1D4ED8; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; }
+    .data-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 10px; background: #F8FAFD; border: 1px solid #EEF2F8; margin-bottom: 8px; }
+    .data-row:last-child { margin-bottom: 0; }
+</style>
+@endsection
+
 @section('content')
-<div class="space-y-6">
+<div style="display:flex;flex-direction:column;gap:20px;">
 
     {{-- Stats Cards Row --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+
         {{-- Total Karyawan --}}
-        <div class="card-white p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+        <div class="card-white" style="padding:20px;display:flex;align-items:center;justify-content:space-between;">
             <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Karyawan</p>
-                <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ $totalKaryawan }}</h3>
-                <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1 mt-1">
-                    <i class="fi fi-ts-chart-line-up"></i> Karyawan Aktif
-                </span>
+                <p class="stat-label-sm">Total Karyawan</p>
+                <div class="stat-number" style="margin-top:6px;">{{ $totalKaryawan }}</div>
+                <p style="font-size:11.5px;color:#16A34A;font-weight:600;margin-top:4px;">
+                    <i class="fi fi-rr-users" style="margin-right:4px;"></i>Karyawan Aktif
+                </p>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center text-2xl shadow-inner">
-                <i class="fi fi-ts-people-poll"></i>
+            <div class="stat-icon-box" style="background:rgba(30,58,110,0.08);color:#1E3A6E;">
+                <i class="fi fi-rr-users"></i>
             </div>
         </div>
 
         {{-- Hadir Hari Ini --}}
-        <div class="card-white p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+        <div class="card-white" style="padding:20px;display:flex;align-items:center;justify-content:space-between;">
             <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hadir Hari Ini</p>
-                <h3 class="text-3xl font-extrabold text-emerald-600 mt-1">{{ $hadirHariIni }}</h3>
-                <span class="text-xs font-semibold text-slate-500 mt-1 inline-block">
+                <p class="stat-label-sm">Hadir Hari Ini</p>
+                <div class="stat-number stat-number-green" style="margin-top:6px;">{{ $hadirHariIni }}</div>
+                <p style="font-size:11.5px;color:#7C8DAB;font-weight:500;margin-top:4px;">
                     Dari total {{ $totalKaryawan }} staf
-                </span>
+                </p>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-inner">
-                <i class="fi fi-ts-clipboard-list-check"></i>
+            <div class="stat-icon-box" style="background:rgba(22,163,74,0.08);color:#16A34A;">
+                <i class="fi fi-rr-check-circle"></i>
             </div>
         </div>
 
         {{-- Terlambat --}}
-        <div class="card-white p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+        <div class="card-white" style="padding:20px;display:flex;align-items:center;justify-content:space-between;">
             <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Terlambat</p>
-                <h3 class="text-3xl font-extrabold text-amber-500 mt-1">{{ $terlambatHariIni }}</h3>
-                <span class="text-xs font-semibold text-amber-600 mt-1 inline-block">
-                    Check-in > 08:15 WIB
-                </span>
+                <p class="stat-label-sm">Terlambat</p>
+                <div class="stat-number stat-number-amber" style="margin-top:6px;">{{ $terlambatHariIni }}</div>
+                <p style="font-size:11.5px;color:#D97706;font-weight:600;margin-top:4px;">
+                    <i class="fi fi-rr-clock" style="margin-right:4px;"></i>Check-in &gt; 08:15 WIB
+                </p>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl shadow-inner">
+            <div class="stat-icon-box" style="background:rgba(217,119,6,0.08);color:#D97706;">
                 <i class="fi fi-rr-clock"></i>
             </div>
         </div>
 
         {{-- Izin / Cuti --}}
-        <div class="card-white p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+        <div class="card-white" style="padding:20px;display:flex;align-items:center;justify-content:space-between;">
             <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Izin & Cuti</p>
-                <h3 class="text-3xl font-extrabold text-blue-600 mt-1">{{ $izinCutiHariIni }}</h3>
-                <span class="text-xs font-semibold text-blue-600 mt-1 inline-block">
-                    Disetujui hari ini
-                </span>
+                <p class="stat-label-sm">Izin &amp; Cuti</p>
+                <div class="stat-number stat-number-blue" style="margin-top:6px;">{{ $izinCutiHariIni }}</div>
+                <p style="font-size:11.5px;color:#2563EB;font-weight:600;margin-top:4px;">
+                    <i class="fi fi-rr-calendar" style="margin-right:4px;"></i>Disetujui hari ini
+                </p>
             </div>
-            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl shadow-inner">
+            <div class="stat-icon-box" style="background:rgba(37,99,235,0.08);color:#2563EB;">
                 <i class="fi fi-rr-calendar"></i>
             </div>
         </div>
 
     </div>
 
-    {{-- Charts Section: Grafik Kehadiran Aktual (Line Chart) & Distribusi Jabatan (Donut Chart) --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {{-- Area Line Chart (Zenith style dengan Data Riil Database) --}}
-        <div class="card-white p-6 lg:col-span-2">
-            <div class="flex items-center justify-between mb-4">
+    {{-- Charts Section --}}
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;">
+
+        {{-- Line Chart Kehadiran --}}
+        <div class="card-white" style="padding:22px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
                 <div>
-                    <h4 class="font-bold text-slate-900 text-base">Grafik Kehadiran Aktual (14 Hari Terakhir)</h4>
-                    <p class="text-xs text-slate-400">Data presensi riil dari database absensi karyawan</p>
+                    <h4 style="font-size:14px;font-weight:800;color:#0F1F3D;margin:0 0 3px;">Grafik Kehadiran (14 Hari Terakhir)</h4>
+                    <p style="font-size:11.5px;color:#7C8DAB;margin:0;">Data presensi riil dari database</p>
                 </div>
-                <div class="flex items-center gap-3 text-xs font-semibold">
-                    <span class="flex items-center gap-1.5 text-orange-600">
-                        <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> Tepat Waktu
+                <div style="display:flex;gap:14px;font-size:11.5px;font-weight:700;">
+                    <span style="display:flex;align-items:center;gap:5px;color:#1E3A6E;">
+                        <span style="width:10px;height:10px;border-radius:50%;background:#1E3A6E;display:inline-block;"></span> Tepat Waktu
                     </span>
-                    <span class="flex items-center gap-1.5 text-amber-600">
-                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Terlambat
+                    <span style="display:flex;align-items:center;gap:5px;color:#D97706;">
+                        <span style="width:10px;height:10px;border-radius:50%;background:#D97706;display:inline-block;"></span> Terlambat
                     </span>
                 </div>
             </div>
-            <div class="h-64 w-full">
+            <div style="height:220px;width:100%;position:relative;">
                 <canvas id="kehadiranChart"></canvas>
             </div>
         </div>
 
-        {{-- Donut Chart: Distribusi Jabatan (Karyawan, Kepala Toko, Management) --}}
-        <div class="card-white p-6">
-            <div class="mb-4">
-                <h4 class="font-bold text-slate-900 text-base">Distribusi Jabatan</h4>
-                <p class="text-xs text-slate-400">Jumlah staf per tingkatan posisi</p>
+        {{-- Donut Chart Jabatan --}}
+        <div class="card-white" style="padding:22px;">
+            <div style="margin-bottom:14px;">
+                <h4 style="font-size:14px;font-weight:800;color:#0F1F3D;margin:0 0 3px;">Distribusi Jabatan</h4>
+                <p style="font-size:11.5px;color:#7C8DAB;margin:0;">Jumlah staf per posisi</p>
             </div>
-            <div class="h-44 w-full flex items-center justify-center">
+            <div style="height:160px;display:flex;align-items:center;justify-content:center;">
                 <canvas id="jabatanChart"></canvas>
             </div>
-            <div class="mt-4 space-y-2 text-xs">
-                <div class="flex items-center justify-between py-1.5 border-b border-slate-50">
-                    <span class="font-medium text-slate-600 flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> Karyawan
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:7px;border-bottom:1px solid #EEF2F8;">
+                    <span style="font-size:12px;color:#5A6B88;font-weight:500;display:flex;align-items:center;gap:7px;">
+                        <span style="width:9px;height:9px;border-radius:50%;background:#1E3A6E;display:inline-block;"></span> Karyawan
                     </span>
-                    <span class="font-bold text-slate-800">{{ $jabatanCounts[0] }} orang</span>
+                    <span style="font-size:12px;font-weight:800;color:#0F1F3D;">{{ $jabatanCounts[0] }}</span>
                 </div>
-                <div class="flex items-center justify-between py-1.5 border-b border-slate-50">
-                    <span class="font-medium text-slate-600 flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> Kepala Toko
+                <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:7px;border-bottom:1px solid #EEF2F8;">
+                    <span style="font-size:12px;color:#5A6B88;font-weight:500;display:flex;align-items:center;gap:7px;">
+                        <span style="width:9px;height:9px;border-radius:50%;background:#F5A623;display:inline-block;"></span> Kepala Toko
                     </span>
-                    <span class="font-bold text-slate-800">{{ $jabatanCounts[1] }} orang</span>
+                    <span style="font-size:12px;font-weight:800;color:#0F1F3D;">{{ $jabatanCounts[1] }}</span>
                 </div>
-                <div class="flex items-center justify-between py-1.5">
-                    <span class="font-medium text-slate-600 flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Management
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <span style="font-size:12px;color:#5A6B88;font-weight:500;display:flex;align-items:center;gap:7px;">
+                        <span style="width:9px;height:9px;border-radius:50%;background:#16A34A;display:inline-block;"></span> Management
                     </span>
-                    <span class="font-bold text-slate-800">{{ $jabatanCounts[2] }} orang</span>
+                    <span style="font-size:12px;font-weight:800;color:#0F1F3D;">{{ $jabatanCounts[2] }}</span>
                 </div>
             </div>
         </div>
 
     </div>
 
-    {{-- Two Column: Absensi Hari Ini & Pengajuan Cuti Pending --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {{-- Absensi Hari Ini --}}
-        <div class="card-white p-6">
-            <div class="flex items-center justify-between mb-4">
+    {{-- Two Column: Absensi & Cuti Pending --}}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        {{-- Log Absensi Hari Ini --}}
+        <div class="card-white" style="padding:22px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
                 <div>
-                    <h4 class="font-bold text-slate-900 text-base">Log Presensi Hari Ini</h4>
-                    <p class="text-xs text-slate-400">Check-in staf secara real-time</p>
+                    <h4 style="font-size:14px;font-weight:800;color:#0F1F3D;margin:0 0 3px;">Log Presensi Hari Ini</h4>
+                    <p style="font-size:11.5px;color:#7C8DAB;margin:0;">Check-in staf secara real-time</p>
                 </div>
-                <a href="{{ route('monitoring.harian') }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800">
-                    Lihat Semua &rarr;
+                <a href="{{ route('monitoring.harian') }}" style="font-size:12px;font-weight:700;color:#1E3A6E;text-decoration:none;">
+                    Lihat Semua →
                 </a>
             </div>
 
-            <div class="space-y-3">
+            <div style="display:flex;flex-direction:column;gap:8px;">
                 @forelse($absensiHariIni as $absen)
-                    <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                    <div class="data-row">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <div style="width:36px;height:36px;border-radius:50%;background:#DBEAFE;color:#1D4ED8;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0;">
                                 {{ strtoupper(substr($absen->karyawan->nama_lengkap ?? 'K', 0, 2)) }}
                             </div>
                             <div>
-                                <h5 class="text-xs font-bold text-slate-900">{{ $absen->karyawan->nama_lengkap ?? '-' }}</h5>
-                                <p class="text-[11px] text-slate-400">
-                                    <span class="font-semibold text-slate-700">{{ $absen->karyawan->jabatan ?? '-' }}</span> &bull; Masuk: <strong class="text-slate-800">{{ $absen->jam_masuk ? substr($absen->jam_masuk, 0, 5) : '-' }} WIB</strong>
-                                </p>
+                                <div style="font-size:12.5px;font-weight:700;color:#0F1F3D;">{{ $absen->karyawan->nama_lengkap ?? '-' }}</div>
+                                <div style="font-size:11px;color:#7C8DAB;">
+                                    {{ $absen->karyawan->jabatan ?? '-' }} &bull;
+                                    <strong style="color:#3B4C6E;">{{ $absen->jam_masuk ? substr($absen->jam_masuk, 0, 5) : '-' }} WIB</strong>
+                                </div>
                             </div>
                         </div>
                         <div>
                             @if($absen->status == 'hadir')
-                                <span class="badge badge-success">Tepat Waktu</span>
+                                <span class="badge-success">Tepat Waktu</span>
                             @elseif($absen->status == 'terlambat')
-                                <span class="badge badge-warning">Terlambat</span>
+                                <span class="badge-warning">Terlambat</span>
                             @else
-                                <span class="badge badge-info">{{ ucfirst($absen->status) }}</span>
+                                <span class="badge-info">{{ ucfirst($absen->status) }}</span>
                             @endif
                         </div>
                     </div>
                 @empty
-                    <div class="text-center py-8 text-slate-400 text-xs">
-                        <i class="fi fi-rr-clock text-2xl block mb-1"></i>
+                    <div style="text-align:center;padding:28px 0;color:#9BADC8;font-size:12.5px;">
+                        <i class="fi fi-rr-clock" style="font-size:24px;display:block;margin-bottom:6px;opacity:0.5;"></i>
                         Belum ada data absensi untuk hari ini
                     </div>
                 @endforelse
             </div>
         </div>
 
-        {{-- Pengajuan Cuti / Izin Pending --}}
-        <div class="card-white p-6">
-            <div class="flex items-center justify-between mb-4">
+        {{-- Pengajuan Cuti Pending --}}
+        <div class="card-white" style="padding:22px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
                 <div>
-                    <h4 class="font-bold text-slate-900 text-base">Persetujuan Cuti & Izin</h4>
-                    <p class="text-xs text-slate-400">Pengajuan menunggu konfirmasi HR</p>
+                    <h4 style="font-size:14px;font-weight:800;color:#0F1F3D;margin:0 0 3px;">Persetujuan Cuti &amp; Izin</h4>
+                    <p style="font-size:11.5px;color:#7C8DAB;margin:0;">Pengajuan menunggu konfirmasi HR</p>
                 </div>
-                <a href="{{ route('cuti.riwayat') }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800">
-                    Kelola Semua &rarr;
+                <a href="{{ route('cuti.riwayat') }}" style="font-size:12px;font-weight:700;color:#1E3A6E;text-decoration:none;">
+                    Kelola Semua →
                 </a>
             </div>
 
-            <div class="space-y-3">
+            <div style="display:flex;flex-direction:column;gap:8px;">
                 @forelse($cutiPending as $cuti)
-                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h5 class="text-xs font-bold text-slate-900">{{ $cuti->karyawan->nama_lengkap ?? '-' }}</h5>
-                                <span class="badge badge-warning text-[10px]">Pending</span>
+                    <div class="data-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <span style="font-size:12.5px;font-weight:700;color:#0F1F3D;">{{ $cuti->karyawan->nama_lengkap ?? '-' }}</span>
+                                <span class="badge-warning" style="font-size:10px;">Pending</span>
                             </div>
-                            <p class="text-[11px] text-slate-500 mt-0.5">
-                                <strong class="text-slate-700">{{ ucwords(str_replace('_', ' ', $cuti->jenis)) }}</strong> ({{ $cuti->jumlah_hari }} hari) &bull; {{ date('d M Y', strtotime($cuti->tanggal_mulai)) }}
-                            </p>
-                            <p class="text-[11px] text-slate-400 italic truncate max-w-xs mt-0.5">"{{ $cuti->alasan }}"</p>
+                            <div style="display:flex;gap:6px;">
+                                <form method="POST" action="{{ route('cuti.approve', $cuti->id) }}" style="display:inline;">
+                                    @csrf
+                                    <button type="submit" style="padding:5px 12px;background:#16A34A;color:white;border:none;border-radius:7px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:background 0.15s;" onmouseover="this.style.background='#15803D'" onmouseout="this.style.background='#16A34A'">
+                                        Setujui
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('cuti.reject', $cuti->id) }}" style="display:inline;">
+                                    @csrf
+                                    <button type="submit" style="padding:5px 12px;background:#DC2626;color:white;border:none;border-radius:7px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:background 0.15s;" onmouseover="this.style.background='#B91C1C'" onmouseout="this.style.background='#DC2626'">
+                                        Tolak
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-1.5 flex-shrink-0">
-                            <form method="POST" action="{{ route('cuti.approve', $cuti->id) }}" class="inline">
-                                @csrf
-                                <button type="submit" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors" title="Setujui">
-                                    Setujui
-                                </button>
-                            </form>
-                            <form method="POST" action="{{ route('cuti.reject', $cuti->id) }}" class="inline">
-                                @csrf
-                                <button type="submit" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold transition-colors" title="Tolak">
-                                    Tolak
-                                </button>
-                            </form>
+                        <div style="font-size:11.5px;color:#5A6B88;">
+                            <strong style="color:#3B4C6E;">{{ ucwords(str_replace('_', ' ', $cuti->jenis)) }}</strong>
+                            ({{ $cuti->jumlah_hari }} hari) &bull; {{ date('d M Y', strtotime($cuti->tanggal_mulai)) }}
+                            <span style="color:#9BADC8;font-style:italic;display:block;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;">"{{ $cuti->alasan }}"</span>
                         </div>
                     </div>
                 @empty
-                    <div class="text-center py-8 text-slate-400 text-xs">
-                        <i class="fi fi-rr-check text-2xl block mb-1"></i>
+                    <div style="text-align:center;padding:28px 0;color:#9BADC8;font-size:12.5px;">
+                        <i class="fi fi-rr-check-circle" style="font-size:24px;display:block;margin-bottom:6px;opacity:0.5;"></i>
                         Semua pengajuan cuti/izin telah diproses
                     </div>
                 @endforelse
@@ -229,82 +258,113 @@
 
 @section('scripts')
 <script>
-    // Chart Kehadiran Aktual 14 Hari
-    const ctxKehadiran = document.getElementById('kehadiranChart').getContext('2d');
-    const gradHadir = ctxKehadiran.createLinearGradient(0, 0, 0, 250);
-    gradHadir.addColorStop(0, 'rgba(255, 107, 0, 0.35)');
-    gradHadir.addColorStop(1, 'rgba(255, 107, 0, 0.0)');
+    // ===== CHART KEHADIRAN 14 HARI =====
+    (function() {
+        const canvas = document.getElementById('kehadiranChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
 
-    new Chart(ctxKehadiran, {
-        type: 'line',
-        data: {
-            labels: {!! json_encode($chartLabels) !!},
-            datasets: [
-                {
-                    label: 'Tepat Waktu',
-                    data: {!! json_encode($chartHadir) !!},
-                    borderColor: '#FF6B00',
-                    borderWidth: 2.5,
-                    backgroundColor: gradHadir,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#FF6B00',
-                    pointBorderColor: '#FFFFFF',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
+        const gradHadir = ctx.createLinearGradient(0, 0, 0, 220);
+        gradHadir.addColorStop(0, 'rgba(30,58,110,0.25)');
+        gradHadir.addColorStop(1, 'rgba(30,58,110,0.0)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode($chartLabels) !!},
+                datasets: [
+                    {
+                        label: 'Tepat Waktu',
+                        data: {!! json_encode($chartHadir) !!},
+                        borderColor: '#1E3A6E',
+                        borderWidth: 2.5,
+                        backgroundColor: gradHadir,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#1E3A6E',
+                        pointBorderColor: '#FFFFFF',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                    },
+                    {
+                        label: 'Terlambat',
+                        data: {!! json_encode($chartTerlambat) !!},
+                        borderColor: '#F5A623',
+                        borderWidth: 2,
+                        borderDash: [5, 4],
+                        backgroundColor: 'transparent',
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#F5A623',
+                        pointBorderColor: '#FFFFFF',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0B1628',
+                        titleColor: '#F5A623',
+                        bodyColor: '#FFFFFF',
+                        padding: 10,
+                        cornerRadius: 8,
+                        borderColor: 'rgba(245,166,35,0.3)',
+                        borderWidth: 1,
+                    }
                 },
-                {
-                    label: 'Terlambat',
-                    data: {!! json_encode($chartTerlambat) !!},
-                    borderColor: '#F59E0B',
-                    borderWidth: 2,
-                    borderDash: [4, 4],
-                    backgroundColor: 'transparent',
-                    fill: false,
-                    tension: 0.4,
-                    pointBackgroundColor: '#F59E0B',
-                    pointRadius: 3,
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11, family: 'Inter' }, color: '#7C8DAB' }
+                    },
+                    y: {
+                        grid: { color: '#EEF2F8', lineWidth: 1 },
+                        ticks: { font: { size: 11, family: 'Inter' }, color: '#7C8DAB', stepSize: 1 },
+                        beginAtZero: true
+                    }
                 }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#0F172A',
-                    padding: 10,
-                    cornerRadius: 8,
-                }
-            },
-            scales: {
-                x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#64748B' } },
-                y: { grid: { color: '#F1F5F9' }, ticks: { font: { size: 11 }, color: '#64748B', stepSize: 2 }, beginAtZero: true }
             }
-        }
-    });
+        });
+    })();
 
-    // Chart Distribusi Jabatan
-    const ctxDept = document.getElementById('jabatanChart').getContext('2d');
-    new Chart(ctxDept, {
-        type: 'doughnut',
-        data: {
-            labels: {!! json_encode($jabatanLabels) !!},
-            datasets: [{
-                data: {!! json_encode($jabatanCounts) !!},
-                backgroundColor: ['#2563EB', '#FF6B00', '#10B981'],
-                borderWidth: 0,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
+    // ===== CHART JABATAN =====
+    (function() {
+        const canvas = document.getElementById('jabatanChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: {!! json_encode($jabatanLabels) !!},
+                datasets: [{
+                    data: {!! json_encode($jabatanCounts) !!},
+                    backgroundColor: ['#1E3A6E', '#F5A623', '#16A34A'],
+                    borderWidth: 0,
+                    hoverOffset: 4,
+                }]
             },
-            cutout: '72%'
-        }
-    });
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#0B1628',
+                        titleColor: '#F5A623',
+                        bodyColor: '#FFFFFF',
+                        padding: 8,
+                        cornerRadius: 8,
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    })();
 </script>
 @endsection
