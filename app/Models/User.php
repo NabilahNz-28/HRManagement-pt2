@@ -17,6 +17,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'profile_photo',
     ];
 
     protected $hidden = [
@@ -30,6 +31,23 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get profile photo URL — checks users.profile_photo first, then karyawan.foto
+     */
+    public function getProfilePhotoUrl(): ?string
+    {
+        if ($this->profile_photo) {
+            return asset('storage/' . $this->profile_photo);
+        }
+
+        $karyawan = $this->karyawan;
+        if ($karyawan && $karyawan->foto) {
+            return asset('storage/' . $karyawan->foto);
+        }
+
+        return null;
     }
 
     public function karyawan()

@@ -58,38 +58,37 @@
         {{-- PENGATURAN --}}
         <div class="sidebar-section-title">Pengaturan</div>
         <a href="{{ route('profile') }}" class="sidebar-item {{ request()->routeIs('profile') ? 'active' : '' }}">
-            <i class="fi fi-rr-user-pen"></i>
-            <span>Profil Saya</span>
+            <i class="fi fi-rr-user"></i>
+            <span>Profile</span>
         </a>
+
+        <form method="POST" action="{{ route('logout') }}" id="logoutFormKaryawan">
+            @csrf
+        </form>
+        <button type="button" onclick="showLogoutModal('logoutFormKaryawan')" class="sidebar-item text-red-500 hover:bg-red-50 hover:text-red-600 w-full text-left cursor-pointer">
+            <i class="fi fi-rr-sign-out-alt text-red-500"></i>
+            <span>Logout</span>
+        </button>
 
     </nav>
 
-    {{-- User Info Card --}}
-    <div class="sidebar-user-card">
-        <div class="sidebar-avatar" style="background:linear-gradient(135deg,#3B82F6,#1D4ED8);color:white;">
-            {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+    {{-- User info footer --}}
+    <div class="p-3 border-t border-slate-100 bg-slate-50/70">
+        <div class="flex items-center gap-3 px-2 py-1">
+            @if(Auth::user()->getProfilePhotoUrl())
+                <img src="{{ Auth::user()->getProfilePhotoUrl() }}" alt="Foto" class="w-9 h-9 rounded-full object-cover shadow-sm">
+            @else
+                <div class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                    {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+                </div>
+            @endif
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-semibold text-slate-800 truncate">{{ Auth::user()->name }}</p>
+                <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-700">
+                    {{ strtoupper(Auth::user()->role) }}
+                </span>
+            </div>
         </div>
-        <div class="sidebar-user-info">
-            <div class="sidebar-user-name">{{ Auth::user()->name }}</div>
-            <span class="sidebar-user-role role-kary">
-                {{ strtoupper(Auth::user()->role) }}
-            </span>
-        </div>
-    </div>
-
-    {{-- ===== LOGOUT BUTTON — PROMINENT & CLEAR ===== --}}
-    <div class="sidebar-logout-area">
-        <button
-            type="button"
-            onclick="openLogoutModal()"
-            class="btn-sidebar-logout"
-            id="sidebarLogoutBtnKary"
-            title="Keluar dari sistem"
-            aria-label="Keluar dari sistem"
-        >
-            <i class="fi fi-sr-sign-out-alt"></i>
-            <span>Keluar dari Sistem</span>
-        </button>
     </div>
 
 </aside>

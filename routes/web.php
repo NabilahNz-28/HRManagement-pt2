@@ -132,4 +132,5 @@ Route::middleware('auth')->group(function () {
     // PENGATURAN / PROFILE
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo');
 });

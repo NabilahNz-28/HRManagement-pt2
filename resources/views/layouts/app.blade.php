@@ -168,18 +168,17 @@
                     <i class="fi fi-rr-clock" style="font-size:13px;"></i>
                     <span id="topbarClock">--:--:-- WIB</span>
                 </div>
-
-                {{-- Divider --}}
-                <div style="width:1px;height:28px;background:#DDE4EF;"></div>
-
-                {{-- User Info --}}
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="topbar-user-avatar">
-                        {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                    </div>
-                    <div style="display:none;" class="md-show">
-                        <div style="font-size:12.5px;font-weight:700;color:#0F1F3D;">{{ Auth::user()->name }}</div>
-                        <div style="font-size:11px;color:#7C8DAB;">{{ Auth::user()->email }}</div>
+                <div class="flex items-center gap-2 pl-3 md:pl-4 border-l border-slate-200">
+                    @if(Auth::user()->getProfilePhotoUrl())
+                        <img src="{{ Auth::user()->getProfilePhotoUrl() }}" alt="Foto" class="w-9 h-9 rounded-full object-cover shadow-sm">
+                    @else
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                            {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+                        </div>
+                    @endif
+                    <div class="text-left hidden md:block">
+                        <div class="text-xs font-bold text-slate-900">{{ Auth::user()->name }}</div>
+                        <div class="text-[11px] text-slate-400">{{ Auth::user()->email }}</div>
                     </div>
                 </div>
 
@@ -225,6 +224,32 @@
 
             @yield('content')
         </main>
+    </div>
+
+    {{-- Logout Confirmation Modal --}}
+    <div id="logoutModal" class="fixed inset-0 z-[9999] hidden items-center justify-center">
+        {{-- Backdrop --}}
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300" onclick="hideLogoutModal()" id="logoutBackdrop"></div>
+        {{-- Modal Card --}}
+        <div class="relative bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-[90%] max-w-sm transform transition-all duration-300 scale-95 opacity-0" id="logoutCard">
+            <div class="flex flex-col items-center text-center">
+                {{-- Icon --}}
+                <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
+                    <i class="fi fi-rr-sign-out-alt text-red-500 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-1">Yakin ingin keluar?</h3>
+                <p class="text-sm text-slate-500 mb-6">Sesi login Anda akan diakhiri dan harus login ulang untuk mengakses sistem.</p>
+                {{-- Buttons --}}
+                <div class="flex items-center gap-3 w-full">
+                    <button type="button" onclick="hideLogoutModal()" class="flex-1 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-sm font-semibold text-slate-600 transition-colors cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button" onclick="confirmLogout()" class="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all cursor-pointer">
+                        Ya, Logout
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -294,6 +319,40 @@
                 });
             });
         });
+
+        // Logout confirmation modal
+        let _logoutFormId = null;
+
+        function showLogoutModal(formId) {
+            _logoutFormId = formId;
+            const modal = document.getElementById('logoutModal');
+            const card = document.getElementById('logoutCard');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            // Animate in
+            requestAnimationFrame(() => {
+                card.classList.remove('scale-95', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            });
+        }
+
+        function hideLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            const card = document.getElementById('logoutCard');
+            card.classList.remove('scale-100', 'opacity-100');
+            card.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 200);
+            _logoutFormId = null;
+        }
+
+        function confirmLogout() {
+            if (_logoutFormId) {
+                document.getElementById(_logoutFormId).submit();
+            }
+        }
     </script>
     @yield('scripts')
 </body>
